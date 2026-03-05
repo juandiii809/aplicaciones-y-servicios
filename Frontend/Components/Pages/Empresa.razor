@@ -1,11 +1,11 @@
-@page "/empresa"
+@page "/enfoque"
 @rendermode InteractiveServer
 @inject FrontBlazor_AppiGenericaCsharp.Services.ApiService Api
 
-<PageTitle>Empresas</PageTitle>
+<PageTitle>enfoque</PageTitle>
 
 <div class="container mt-4">
-    <h3>Empresas</h3>
+    <h3>enfoque</h3>
 
     @* ───────── ALERTA ───────── *@
     @if (!string.IsNullOrEmpty(mensaje))
@@ -19,7 +19,7 @@
     @* ───────── BOTON NUEVO ───────── *@
     @if (!mostrarFormulario)
     {
-        <button class="btn btn-primary mb-3" @onclick="NuevoRegistro">Nueva Empresa</button>
+        <button class="btn btn-primary mb-3" @onclick="NuevoRegistro">Nueva enfoque</button>
     }
 
     @* ───────── LIMITE DE REGISTROS ───────── *@
@@ -46,6 +46,10 @@
                         <label class="form-label">Nombre</label>
                         <input class="form-control" @bind="campoNombre" />
                     </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">descripcion</label>
+                        <input class="form-control" @bind="campodescripcion" />
+                    </div>
                 </div>
                 <button class="btn btn-success me-2" @onclick="GuardarRegistro">Guardar</button>
                 <button class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
@@ -71,6 +75,7 @@
                 <tr>
                     <th>Codigo</th>
                     <th>Nombre</th>
+                    <th>descripcion</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -80,6 +85,7 @@
                     <tr>
                         <td>@reg["codigo"]</td>
                         <td>@reg["nombre"]</td>
+                        <td>@reg["descripcion"]</td>
                         <td>
                             <button class="btn btn-warning btn-sm me-1"
                                     @onclick="() => EditarRegistro(reg)">Editar</button>
@@ -109,6 +115,7 @@
     // Campos del formulario
     private string campoCodigo = string.Empty;
     private string campoNombre = string.Empty;
+    private string campodescripcion = string.Empty;
     private int? limite = null;
 
     protected override async Task OnInitializedAsync()
@@ -119,7 +126,7 @@
     private async Task CargarRegistros()
     {
         cargando = true;
-        registros = await Api.ListarAsync("empresa", limite);
+        registros = await Api.ListarAsync("enfoque", limite);
         cargando = false;
     }
 
@@ -128,6 +135,7 @@
         editando = false;
         campoCodigo = string.Empty;
         campoNombre = string.Empty;
+        campodescripcion = string.Empty;
         mostrarFormulario = true;
         mensaje = string.Empty;
     }
@@ -137,6 +145,7 @@
         editando = true;
         campoCodigo = reg["codigo"]?.ToString() ?? "";
         campoNombre = reg["nombre"]?.ToString() ?? "";
+        campodescripcion = reg["descripcion"]?.ToString() ?? "";
         mostrarFormulario = true;
         mensaje = string.Empty;
     }
@@ -146,19 +155,20 @@
         var datos = new Dictionary<string, object?>
         {
             ["codigo"] = campoCodigo,
-            ["nombre"] = campoNombre
+            ["nombre"] = campoNombre,
+            ["descripcion"] = campodescripcion
         };
 
         if (editando)
         {
             datos.Remove("codigo");
-            var resultado = await Api.ActualizarAsync("empresa", "codigo", campoCodigo, datos);
+            var resultado = await Api.ActualizarAsync("enfoque", "codigo", campoCodigo, datos);
             exito = resultado.exito;
             mensaje = resultado.mensaje;
         }
         else
         {
-            var resultado = await Api.CrearAsync("empresa", datos);
+            var resultado = await Api.CrearAsync("enfoque", datos);
             exito = resultado.exito;
             mensaje = resultado.mensaje;
         }
@@ -173,7 +183,7 @@
     private async Task EliminarRegistro(Dictionary<string, object?> reg)
     {
         string codigo = reg["codigo"]?.ToString() ?? "";
-        var resultado = await Api.EliminarAsync("empresa", "codigo", codigo);
+        var resultado = await Api.EliminarAsync("enfoque", "codigo", codigo);
         exito = resultado.exito;
         mensaje = resultado.mensaje;
 
