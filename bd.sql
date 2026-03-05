@@ -2,6 +2,8 @@
     agregar aqui todas las tablas que se creen para que todos tengamos lo mismo
     
 */
+create database innovacion_curricular
+go 
 use innovacion_curricular
 go
 CREATE TABLE car_innovacion (
@@ -13,6 +15,36 @@ CREATE TABLE car_innovacion (
 
 CREATE TABLE enfoque (
   id INT NOT NULL PRIMARY KEY,
+  nombre NVARCHAR(45) NOT NULL,
+  descripcion NVARCHAR(45) NOT NULL
+);
+
+CREATE TABLE aspecto_normativo (
+  id INT NOT NULL PRIMARY KEY,
+  tipo NVARCHAR(45) NOT NULL,
+  descripcion NVARCHAR(45) NOT NULL,
+  fuente NVARCHAR(45) NOT NULL
+);
+
+CREATE TABLE universidad (
+  id INT NOT NULL PRIMARY KEY,
+  nombre NVARCHAR(60) NOT NULL,
+  tipo NVARCHAR(45) NOT NULL,
+  ciudad NVARCHAR(45) NOT NULL
+);
+
+CREATE TABLE aliado (
+  nit BIGINT NOT NULL PRIMARY KEY,
+  razon_social NVARCHAR(60) NOT NULL,
+  nombre_contacto NVARCHAR(60) NOT NULL,
+  correo NVARCHAR(70) NOT NULL,
+  telefono NVARCHAR(45) NOT NULL,
+  ciudad NVARCHAR(45) NOT NULL
+);
+
+CREATE TABLE practica_estrategia (
+  id INT NOT NULL PRIMARY KEY,
+  tipo NVARCHAR(45) NOT NULL,
   nombre NVARCHAR(45) NOT NULL,
   descripcion NVARCHAR(45) NOT NULL
 );
