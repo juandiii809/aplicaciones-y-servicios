@@ -33,15 +33,6 @@ CREATE TABLE universidad (
   ciudad NVARCHAR(45) NOT NULL
 );
 
-CREATE TABLE aliado (
-  nit BIGINT NOT NULL PRIMARY KEY,
-  razon_social NVARCHAR(60) NOT NULL,
-  nombre_contacto NVARCHAR(60) NOT NULL,
-  correo NVARCHAR(70) NOT NULL,
-  telefono NVARCHAR(45) NOT NULL,
-  ciudad NVARCHAR(45) NOT NULL
-);
-
 CREATE TABLE practica_estrategia (
   id INT NOT NULL PRIMARY KEY,
   tipo NVARCHAR(45) NOT NULL,
