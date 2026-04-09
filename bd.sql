@@ -140,5 +140,97 @@ CREATE TABLE programa_ci (
     ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 GO
+
+CREATE TABLE enfoque_rc(
+  enfoque INT NOT NULL,
+  registro_calificado INT NOT NULL,
+  PRIMARY KEY (enfoque, registro_calificado),
+  CONSTRAINT fk_enfoque_rc_enfoque FOREIGN KEY (enfoque)
+    REFERENCES enfoque (id)
+    ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_enfoque_rc_registro_calificado FOREIGN KEY (registro_calificado)
+    REFERENCES registro_calificado (codigo)
+    ON DELETE NO ACTION ON UPDATE NO ACTION
+);
+GO
+
+CREATE TABLE activ_academica (
+  id INT NOT NULL PRIMARY KEY,
+  nombre NVARCHAR(45) NOT NULL,
+  num_creditos INT NOT NULL,
+  tipo NVARCHAR(20) NOT NULL,
+  area_formacion NVARCHAR(45) NOT NULL,
+  h_acom INT NOT NULL,
+  h_indep INT NOT NULL,
+  idioma NVARCHAR(45) NOT NULL,
+  espejo BIT NOT NULL,
+  entidad_espejo NVARCHAR(45) NOT NULL,
+  pais_espejo NVARCHAR(45) NOT NULL,
+  disenio INT NULL,
+  CONSTRAINT fk_activ_academicas_programa FOREIGN KEY (disenio)
+    REFERENCES programa (id)
+    ON DELETE NO ACTION ON UPDATE NO ACTION
+);
+GO
+CREATE TABLE programa_pe (
+  programa INT NOT NULL,
+  practica_estrategia INT NOT NULL,
+  PRIMARY KEY (programa, practica_estrategia),
+  CONSTRAINT fk_programa_pe_programa FOREIGN KEY (programa)
+    REFERENCES programa (id)
+    ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_programa_pe_practica_estrategia FOREIGN KEY (practica_estrategia)
+    REFERENCES practica_estrategia (id)
+    ON DELETE NO ACTION ON UPDATE NO ACTION
+);
+GO
+CREATE TABLE an_programa (
+  aspecto_normativo INT NOT NULL,
+  programa INT NOT NULL,
+  PRIMARY KEY (aspecto_normativo, programa),
+  CONSTRAINT fk_an_programa_aspecto_normativo FOREIGN KEY (aspecto_normativo)
+    REFERENCES aspecto_normativo (id)
+    ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_an_programa_programa FOREIGN KEY (programa)
+    REFERENCES programa (id)
+    ON DELETE NO ACTION ON UPDATE NO ACTION
+);
+GO
+CREATE TABLE aa_rc (
+  activ_academicas_idcurso INT NOT NULL,
+  registro_calificado_codigo INT NOT NULL,
+  componente NVARCHAR(45) NOT NULL,
+  semestre NVARCHAR(45) NOT NULL,
+  PRIMARY KEY (activ_academicas_idcurso, registro_calificado_codigo),
+  CONSTRAINT fk_aa_rc_activ_academica FOREIGN KEY (activ_academicas_idcurso)
+    REFERENCES activ_academica (id)
+    ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_aa_rc_registro_calificado FOREIGN KEY (registro_calificado_codigo)
+    REFERENCES registro_calificado (codigo)
+    ON DELETE NO ACTION ON UPDATE NO ACTION
+);
+GO
+CREATE TABLE area_conocimiento (
+  id INT NOT NULL PRIMARY KEY,
+  gran_area NVARCHAR(60) NOT NULL,
+  area NVARCHAR(60) NOT NULL,
+  disciplina NVARCHAR(60) NOT NULL
+);
+GO
+
+CREATE TABLE programa_ac (
+  programa INT NOT NULL,
+  area_conocimiento INT NOT NULL,
+  PRIMARY KEY (programa, area_conocimiento),
+  CONSTRAINT fk_programa_ac_programa FOREIGN KEY (programa)
+    REFERENCES programa (id)
+    ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT fk_programa_ac_area_conocimiento FOREIGN KEY (area_conocimiento)
+    REFERENCES area_conocimiento (id)
+    ON DELETE NO ACTION ON UPDATE NO ACTION
+);
+GO
+
+
 insert into enfoque values(1, 'no se', ' no se ')
 select * from car_innovacion
