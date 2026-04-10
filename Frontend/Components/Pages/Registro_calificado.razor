@@ -1,0 +1,273 @@
+@page "/registro_calificado"
+@rendermode InteractiveServer
+@using FrontBlazor_AppiGenericaCsharp.Services
+
+<PageTitle>Gestión de Registros Calificados</PageTitle>
+
+<div class="container mt-4">
+    <h3>Gestión de Registros Calificados</h3>
+
+    @* ───────── ALERTA ───────── *@
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(exito ? "alert-success" : "alert-danger") alert-dismissible fade show">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+        </div>
+    }
+
+    @* ───────── BOTONES Y FILTROS ───────── *@
+    <div class="row mb-3">
+        <div class="col-md-6">
+            @if (!mostrarFormulario)
+            {
+                <button class="btn btn-primary" @onclick="NuevoRegistro">Nuevo Registro Calificado</button>
+            }
+        </div>
+        <div class="col-md-6 d-flex justify-content-end align-items-center">
+            <label class="form-label me-2 mb-0">Límite:</label>
+            <input class="form-control me-2" type="number" style="width:100px" @bind="limite" />
+            <button class="btn btn-outline-secondary" @onclick="CargarRegistros">Cargar</button>
+        </div>
+    </div>
+
+    @* ───────── FORMULARIO ADAPTADO (image_e496aa.png) ───────── *@
+    @if (mostrarFormulario)
+    {
+        <div class="card mb-4 border-info">
+            <div class="card-header bg-info text-white">
+                @(editando ? "Editar Registro" : "Nuevo Registro")
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">Código</label>
+                        <input class="form-control" type="number" @bind="campoCodigo" disabled="@editando" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Créditos</label>
+                        <input class="form-control" @bind="campoCantCreditos" placeholder="Cant. créditos" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Horas Acompañadas</label>
+                        <input class="form-control" @bind="campoHoraAcom" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Horas Independientes</label>
+                        <input class="form-control" @bind="campoHoraInd" />
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Metodología</label>
+                        <input class="form-control" @bind="campoMetodologia" placeholder="Ej: Presencial" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Tipo Titulación</label>
+                        <input class="form-control" @bind="campoTipoTitulacion" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Programa</label>
+                        <select class="form-select" @bind="campoPrograma">
+                            <option value="0">-- Seleccione Programa --</option>
+                            @foreach (var p in programas)
+                            {
+                                <option value="@p["id"]">@p["nombre"]</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Fecha Inicio</label>
+                        <input class="form-control" type="date" @bind="campoFechaInicio" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Fecha Fin</label>
+                        <input class="form-control" type="date" @bind="campoFechaFin" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Duración (Años)</label>
+                        <input class="form-control" @bind="campoDuracionAnios" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Duración (Semestres)</label>
+                        <input class="form-control" @bind="campoDuracionSemestres" />
+                    </div>
+                </div>
+                <div class="mt-2 text-end">
+                    <button class="btn btn-success me-2" @onclick="GuardarRegistro">Guardar</button>
+                    <button class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ───────── TABLA DE DATOS ───────── *@
+    @if (cargando)
+    {
+        <div class="d-flex justify-content-center my-4">
+            <div class="spinner-border text-info" role="status"></div>
+        </div>
+    }
+    else if (registros.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Código</th>
+                        <th>Créditos</th>
+                        <th>Metodología</th>
+                        <th>Vigencia</th>
+                        <th>Programa</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var reg in registros)
+                    {
+                        <tr>
+                            <td>@reg["codigo"]</td>
+                            <td>@reg["cant_creditos"]</td>
+                            <td>@reg["metodologia"]</td>
+                            <td><small>@reg["fecha_inicio"] a @reg["fecha_fin"]</small></td>
+                            <td>@ObtenerNombrePrograma(reg["programa"]?.ToString())</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm" @onclick="() => EditarRegistro(reg)">Editar</button>
+                                <button class="btn btn-danger btn-sm" @onclick="() => EliminarRegistro(reg)">Eliminar</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">No hay registros calificados registrados.</div>
+    }
+</div>
+
+@code {
+    [Microsoft.AspNetCore.Components.Inject]
+    private ApiService Api { get; set; } = default!;
+
+    [Microsoft.AspNetCore.Components.Inject]
+    private IJSRuntime JS { get; set; } = default!;
+
+    private List<Dictionary<string, object?>> registros = new();
+    private List<Dictionary<string, object?>> programas = new();
+    private bool cargando = true;
+    private bool mostrarFormulario = false;
+    private bool editando = false;
+    private string mensaje = string.Empty;
+    private bool exito = false;
+
+    // Campos de la tabla registro_calificado
+    private int campoCodigo = 0;
+    private string campoCantCreditos = "";
+    private string campoHoraAcom = "";
+    private string campoHoraInd = "";
+    private string campoMetodologia = "";
+    private DateTime campoFechaInicio = DateTime.Now;
+    private DateTime campoFechaFin = DateTime.Now;
+    private string campoDuracionAnios = "";
+    private string campoDuracionSemestres = "";
+    private string campoTipoTitulacion = "";
+    private int campoPrograma = 0;
+    private int? limite = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try {
+            programas = await Api.ListarAsync("programa");
+            await CargarRegistros();
+        } catch (Exception ex) {
+            mensaje = "Error: " + ex.Message;
+            cargando = false;
+        }
+    }
+
+    private async Task CargarRegistros()
+    {
+        cargando = true;
+        registros = await Api.ListarAsync("registro_calificado", limite);
+        cargando = false;
+    }
+
+    private string ObtenerNombrePrograma(string? id)
+    {
+        var prog = programas.FirstOrDefault(p => p["id"]?.ToString() == id);
+        return prog?["nombre"]?.ToString() ?? $"ID: {id}";
+    }
+
+    private void NuevoRegistro()
+    {
+        editando = false;
+        LimpiarCampos();
+        mostrarFormulario = true;
+    }
+
+    private void LimpiarCampos()
+    {
+        campoCodigo = 0; campoCantCreditos = ""; campoHoraAcom = ""; campoHoraInd = "";
+        campoMetodologia = ""; campoFechaInicio = DateTime.Now; campoFechaFin = DateTime.Now;
+        campoDuracionAnios = ""; campoDuracionSemestres = ""; campoTipoTitulacion = "";
+        campoPrograma = 0; mensaje = "";
+    }
+
+    private void EditarRegistro(Dictionary<string, object?> reg)
+    {
+        editando = true;
+        campoCodigo = int.Parse(reg["codigo"]?.ToString() ?? "0");
+        campoCantCreditos = reg["cant_creditos"]?.ToString() ?? "";
+        campoHoraAcom = reg["hora_acom"]?.ToString() ?? "";
+        campoHoraInd = reg["hora_ind"]?.ToString() ?? "";
+        campoMetodologia = reg["metodologia"]?.ToString() ?? "";
+        
+        if (DateTime.TryParse(reg["fecha_inicio"]?.ToString(), out var fIni)) campoFechaInicio = fIni;
+        if (DateTime.TryParse(reg["fecha_fin"]?.ToString(), out var fFin)) campoFechaFin = fFin;
+
+        campoDuracionAnios = reg["duracion_anios"]?.ToString() ?? "";
+        campoDuracionSemestres = reg["duracion_semestres"]?.ToString() ?? "";
+        campoTipoTitulacion = reg["tipo_titulacion"]?.ToString() ?? "";
+        campoPrograma = int.Parse(reg["programa"]?.ToString() ?? "0");
+        mostrarFormulario = true;
+    }
+
+    private async Task GuardarRegistro()
+    {
+        var datos = new Dictionary<string, object?> {
+            ["codigo"] = campoCodigo,
+            ["cant_creditos"] = campoCantCreditos,
+            ["hora_acom"] = campoHoraAcom,
+            ["hora_ind"] = campoHoraInd,
+            ["metodologia"] = campoMetodologia,
+            ["fecha_inicio"] = campoFechaInicio.ToString("yyyy-MM-dd"),
+            ["fecha_fin"] = campoFechaFin.ToString("yyyy-MM-dd"),
+            ["duracion_anios"] = campoDuracionAnios,
+            ["duracion_semestres"] = campoDuracionSemestres,
+            ["tipo_titulacion"] = campoTipoTitulacion,
+            ["programa"] = campoPrograma
+        };
+
+        var res = editando 
+            ? await Api.ActualizarAsync("registro_calificado", "codigo", campoCodigo.ToString(), datos)
+            : await Api.CrearAsync("registro_calificado", datos);
+
+        exito = res.exito;
+        mensaje = res.mensaje;
+        if (exito) { mostrarFormulario = false; await CargarRegistros(); }
+    }
+
+    private async Task EliminarRegistro(Dictionary<string, object?> reg)
+    {
+        if (await JS.InvokeAsync<bool>("confirm", $"¿Eliminar registro con código {reg["codigo"]}?")) {
+            var res = await Api.EliminarAsync("registro_calificado", "codigo", reg["codigo"]?.ToString() ?? "");
+            exito = res.exito;
+            mensaje = res.mensaje;
+            if (exito) await CargarRegistros();
+        }
+    }
+
+    private void Cancelar() { mostrarFormulario = false; mensaje = ""; }
+}
