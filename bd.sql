@@ -231,6 +231,77 @@ CREATE TABLE programa_ac (
 );
 GO
 
+CREATE TRIGGER trg_validar_fechas_registro
+ON registro_calificado
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1 
+        FROM inserted 
+        WHERE fecha_fin <= fecha_inicio
+    )
+    BEGIN
+        DECLARE @msg NVARCHAR(200);
+        SET @msg = 'Error de integridad: La fecha de fin debe ser posterior a la fecha de inicio.';
+        
+        -- Lanzamos error 50001 (personalizado)
+        THROW 50001, @msg, 1;
+    END
+END;
+GO
+
+CREATE TRIGGER trg_validar_clase_espejo
+ON activ_academica
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1 
+        FROM inserted 
+        WHERE espejo = 1 
+        AND (entidad_espejo IS NULL OR entidad_espejo = '' OR pais_espejo IS NULL OR pais_espejo = '')
+    )
+    BEGIN
+        THROW 50002, 'Si la actividad es Espejo, debe registrar la entidad y el pa s de origen.', 1;
+    END
+END;
+GO
+
+CREATE TRIGGER trg_validar_consistencia_programa
+ON programa
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- 1. Validar que la fecha de cierre sea l gica respecto a la creaci n
+    IF EXISTS (
+        SELECT 1 
+        FROM inserted 
+        WHERE fecha_cierre IS NOT NULL 
+        AND CAST(fecha_cierre AS DATE) < CAST(fecha_creacion AS DATE)
+    )
+    BEGIN
+        THROW 50003, 'Error: La fecha de cierre no puede ser anterior a la fecha de creaci n del programa.', 1;
+    END
+
+    -- 2. Validar que la cantidad de graduados no sea un valor negativo
+    IF EXISTS (
+        SELECT 1 
+        FROM inserted 
+        WHERE TRY_CAST(cant_graduados AS INT) < 0
+    )
+    BEGIN
+        THROW 50004, 'Error: La cantidad de graduados no puede ser un n mero negativo.', 1;
+    END
+END;
+GO
+
 
 insert into enfoque values(1, 'no se', ' no se ')
 select * from car_innovacion
