@@ -305,3 +305,75 @@ GO
 
 insert into enfoque values(1, 'no se', ' no se ')
 select * from car_innovacion
+
+
+CREATE TABLE rol (
+    id INT IDENTITY(1,1) NOT NULL,
+    nombre VARCHAR(50) NOT NULL,
+    CONSTRAINT pk_rol PRIMARY KEY (id)
+);
+
+CREATE TABLE ruta (
+    ruta VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(200) NOT NULL,
+    CONSTRAINT pk_ruta PRIMARY KEY (ruta)
+);
+
+CREATE TABLE usuario (
+    email VARCHAR(100) NOT NULL,
+    contrasena VARCHAR(200) NOT NULL,
+    CONSTRAINT pk_usuario PRIMARY KEY (email)
+);
+GO
+
+
+CREATE TABLE rol_usuario (
+    fkemail VARCHAR(100) NOT NULL,
+    fkidrol INT NOT NULL,
+    CONSTRAINT pk_rol_usuario PRIMARY KEY (fkemail, fkidrol),
+    CONSTRAINT fk_rolusuario_usuario FOREIGN KEY (fkemail) REFERENCES usuario(email),
+    CONSTRAINT fk_rolusuario_rol FOREIGN KEY (fkidrol) REFERENCES rol(id)
+);
+
+CREATE TABLE rutarol (
+    ruta VARCHAR(100) NOT NULL,
+    rol VARCHAR(50) NOT NULL,
+    CONSTRAINT pk_rutarol PRIMARY KEY (ruta, rol)
+);
+GO
+
+SET IDENTITY_INSERT rol ON;
+insert into rol (id, nombre) values(1, 'Administrador')
+insert into rol (id, nombre) values(2, 'Cliente')
+SET IDENTITY_INSERT rol OFF;
+
+
+INSERT INTO ruta (ruta, descripcion) VALUES 
+('/acreditacion', 'acreditacion'),
+('/area_conocimiento', 'area conocimiento'),
+('/aspecto_normativo', 'aspecto normativo'),
+('/cambiarcontrasena', 'cambiar contrasena'),
+('/car_innovacion', 'car innovacion'),
+('/enfoque', 'enfoque'),
+('/facultad', 'facultad'),
+('/home', 'pagina principal'),
+('/login', 'login'),
+('/pasantia', 'pasantia'),
+('/practica_estrategia', 'practica estrategia'),
+('/programa', 'programa'),
+('/recuperarcontrasena', 'recuperar contrasena'),
+('/registro_calificado', 'registro calificado'),
+('/rol', 'rol'),
+('/ruta', 'ruta'),
+('/sinacceso', 'sin acceso'),
+('/universidad', 'universidad'),
+('/usuario', 'usuario'),
+('/vendedor', 'vendedor');
+
+insert into rol_usuario (fkemail, fkidrol) values ('admin@correo.com', 1), ('juanosorio1124226@correo.itm.edu.co', 1)
+
+INSERT INTO rutarol (fkidruta, fkidrol) VALUES 
+(20, 1), (21, 1), (22, 1), (23, 1), (24, 1), 
+(25, 1), (26, 1), (27, 1), (28, 1), (29, 1), 
+(30, 1), (31, 1), (32, 1), (33, 1), (34, 1), 
+(35, 1), (36, 1), (37, 1), (38, 1), (39, 1);
