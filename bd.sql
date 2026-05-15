@@ -342,6 +342,10 @@ CREATE TABLE rutarol (
 );
 GO
 
+INSERT INTO usuarios (email, contrasena) VALUES 
+('admin@correo.com', '1234'),
+('juanosorio1124226@correo.itm.edu.co', '1234');
+
 SET IDENTITY_INSERT rol ON;
 insert into rol (id, nombre) values(1, 'Administrador')
 insert into rol (id, nombre) values(2, 'Cliente')
