@@ -160,7 +160,7 @@ public class AuthService
     {
         _session = session;
         // Busca ApiUrl primero, si no existe busca ApiBaseUrl (compatible con ambos nombres)
-        _apiUrl = config["ApiUrl"] ?? config["ApiBaseUrl"] ?? "http://127.0.0.1:5035";
+        _apiUrl = config["ApiUrl"] ?? config["ApiBaseUrl"] ?? "http://localhost:5035";
         _http = new HttpClient { BaseAddress = new Uri(_apiUrl) };
     }
 

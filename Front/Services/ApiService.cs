@@ -33,14 +33,9 @@ namespace FrontBlazor_AppiGenericaCsharp.Services
         /// </summary>
         private void AgregarTokenJwt()
         {
-            _http.DefaultRequestHeaders.Authorization = null; // Limpia
-    
-    // Verifica si el objeto auth existe y tiene un token
-    if (!string.IsNullOrEmpty(_auth?.Token))
-    {
-        _http.DefaultRequestHeaders.Authorization = 
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _auth.Token);
-    }
+            _http.DefaultRequestHeaders.Remove("Authorization");
+            if (_auth?.Token != null)
+                _http.DefaultRequestHeaders.Add("Authorization", $"Bearer {_auth.Token}");
         }
 
         // ──────────────────────────────────────────────
@@ -166,6 +161,7 @@ namespace FrontBlazor_AppiGenericaCsharp.Services
         {
             try
             {
+                AgregarTokenJwt();
                 var respuesta = await _http.GetFromJsonAsync<JsonElement>(
                     "/api/diagnostico/conexion", _jsonOptions);
 
