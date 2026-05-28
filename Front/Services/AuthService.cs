@@ -1024,10 +1024,12 @@ WHERE u.{pkUsuario} = @email";
     /// - Si no hay rutas configuradas (sistema nuevo) permite todo.
     /// - Verifica la ruta exacta o si es sub-ruta (ej: /producto permite /producto/editar).
     /// </summary>
-    public bool TieneAcceso(string ruta)
+  public bool TieneAcceso(string ruta)
     {
         if (ruta == "/") return true;
         if (RutasPermitidas.Count == 0) return true;
-        return RutasPermitidas.Any(r => ruta == r || ruta.StartsWith(r + "/"));
+        return RutasPermitidas.Any(r => 
+            ruta.Equals(r, StringComparison.OrdinalIgnoreCase) || 
+            ruta.StartsWith(r + "/", StringComparison.OrdinalIgnoreCase));
     }
 }
