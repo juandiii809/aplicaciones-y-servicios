@@ -1,0 +1,286 @@
+@page "/docente_departamento"
+@rendermode InteractiveServer
+@using FrontBlazor_AppiGenericaCsharp.Services
+
+<PageTitle>Docente Departamento</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Gestión de Vinculación Docente - Departamento</h3>
+        @if (!mostrarFormulario)
+        {
+            <button class="btn btn-primary shadow" @onclick="NuevoRegistro">
+                <i class="bi bi-plus-circle"></i> Nueva Vinculación
+            </button>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(exito ? "alert-success" : "alert-danger") alert-dismissible fade show">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+        </div>
+    }
+
+    @if (mostrarFormulario)
+    {
+        <div class="card shadow border-primary mb-5">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">@(editando ? "Editar Vinculación" : "Nueva Vinculación")</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">ID Docente</label>
+                        <input class="form-control" type="number"
+                               placeholder="Ingrese el ID del docente"
+                               @bind="campoDocente"
+                               disabled="@editando" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">ID Departamento</label>
+                        <input class="form-control" type="number"
+                               placeholder="Ingrese el ID del departamento"
+                               @bind="campoDepartamento"
+                               disabled="@editando" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Dedicación</label>
+                        <select class="form-select" @bind="campoDedicacion">
+                            <option value="">-- Seleccione --</option>
+                            <option value="Tiempo completo">Tiempo completo</option>
+                            <option value="Medio tiempo">Medio tiempo</option>
+                            <option value="Hora cátedra">Hora cátedra</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Modalidad</label>
+                        <select class="form-select" @bind="campoModalidad">
+                            <option value="">-- Seleccione --</option>
+                            <option value="Presencial">Presencial</option>
+                            <option value="Virtual">Virtual</option>
+                            <option value="Híbrida">Híbrida</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Fecha Ingreso</label>
+                        <input class="form-control" type="date" @bind="campoFechaIngreso" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Fecha Salida <span class="text-muted fw-normal">(opcional)</span></label>
+                        <input class="form-control" type="date" @bind="campoFechaSalida" />
+                    </div>
+                </div>
+                <div class="mt-3 text-end">
+                    <button class="btn btn-success px-4 me-2" @onclick="GuardarRegistro">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                    <button class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (cargando)
+    {
+        <div class="d-flex justify-content-center my-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else if (registros.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle border">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID Docente</th>
+                        <th>ID Departamento</th>
+                        <th>Dedicación</th>
+                        <th>Modalidad</th>
+                        <th>Fecha Ingreso</th>
+                        <th>Fecha Salida</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var reg in registros)
+                    {
+                        <tr>
+                            <td>@reg["docente"]</td>
+                            <td>@reg["departamento"]</td>
+                            <td>@reg["dedicacion"]</td>
+                            <td>@reg["modalidad"]</td>
+                            <td>@reg["fecha_ingreso"]</td>
+                            <td>@(reg["fecha_salida"] ?? "Activo")</td>
+                            <td class="text-center">
+                                <button class="btn btn-warning btn-sm me-1"
+                                        @onclick="() => EditarRegistro(reg)">
+                                    Editar
+                                </button>
+                                <button class="btn btn-danger btn-sm"
+                                        @onclick="() => EliminarRegistro(reg)">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">No hay vinculaciones registradas.</div>
+    }
+</div>
+
+@code {
+    [Inject] private ApiService Api { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private List<Dictionary<string, object?>> registros = new();
+
+    private bool cargando = true;
+    private bool mostrarFormulario = false;
+    private bool editando = false;
+    private bool exito = false;
+    private string mensaje = "";
+
+    private int campoDocente = 0;
+    private int campoDepartamento = 0;
+    private string campoDedicacion = "";
+    private string campoModalidad = "";
+    private DateTime campoFechaIngreso = DateTime.Now;
+    private DateTime? campoFechaSalida = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarRegistros();
+    }
+
+    private async Task CargarRegistros()
+    {
+        cargando = true;
+        registros = await Api.ListarAsync("docente_departamento");
+        cargando = false;
+    }
+
+    private void NuevoRegistro()
+    {
+        editando = false;
+        campoDocente = 0;
+        campoDepartamento = 0;
+        campoDedicacion = "";
+        campoModalidad = "";
+        campoFechaIngreso = DateTime.Now;
+        campoFechaSalida = null;
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private void EditarRegistro(Dictionary<string, object?> reg)
+    {
+        editando = true;
+        campoDocente = Convert.ToInt32(reg["docente"]);
+        campoDepartamento = Convert.ToInt32(reg["departamento"]);
+        campoDedicacion = reg["dedicacion"]?.ToString() ?? "";
+        campoModalidad = reg["modalidad"]?.ToString() ?? "";
+        if (DateTime.TryParse(reg["fecha_ingreso"]?.ToString(), out var fi)) campoFechaIngreso = fi;
+        campoFechaSalida = DateTime.TryParse(reg["fecha_salida"]?.ToString(), out var fs) ? fs : null;
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private async Task GuardarRegistro()
+    {
+        if (campoDocente == 0)
+        {
+            mensaje = "Debe ingresar el ID del docente.";
+            exito = false;
+            return;
+        }
+
+        if (campoDepartamento == 0)
+        {
+            mensaje = "Debe ingresar el ID del departamento.";
+            exito = false;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(campoDedicacion))
+        {
+            mensaje = "Debe seleccionar la dedicación.";
+            exito = false;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(campoModalidad))
+        {
+            mensaje = "Debe seleccionar la modalidad.";
+            exito = false;
+            return;
+        }
+
+        var datos = new Dictionary<string, object?>
+        {
+            ["docente"]        = campoDocente,
+            ["departamento"]   = campoDepartamento,
+            ["dedicacion"]     = campoDedicacion,
+            ["modalidad"]      = campoModalidad,
+            ["fecha_ingreso"]  = campoFechaIngreso.ToString("yyyy-MM-dd"),
+            ["fecha_salida"]   = campoFechaSalida?.ToString("yyyy-MM-dd")
+        };
+
+        try
+        {
+            if (editando)
+            {
+                datos.Remove("docente");
+                datos.Remove("departamento");
+                var resultado = await Api.ActualizarAsync("docente_departamento", "docente", campoDocente.ToString(), datos);
+                exito = resultado.exito;
+                mensaje = resultado.mensaje;
+            }
+            else
+            {
+                var resultado = await Api.CrearAsync("docente_departamento", datos);
+                exito = resultado.exito;
+                mensaje = resultado.mensaje;
+            }
+
+            if (exito)
+            {
+                mostrarFormulario = false;
+                await CargarRegistros();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = "Error: " + ex.Message;
+            exito = false;
+        }
+    }
+
+    private async Task EliminarRegistro(Dictionary<string, object?> reg)
+    {
+        if (await JS.InvokeAsync<bool>("confirm",
+            $"¿Eliminar la vinculación del docente {reg["docente"]} con el departamento {reg["departamento"]}?"))
+        {
+            var resultado = await Api.EliminarAsync("docente_departamento", "docente", reg["docente"]?.ToString() ?? "");
+            exito = resultado.exito;
+            mensaje = resultado.mensaje;
+
+            if (exito)
+                await CargarRegistros();
+        }
+    }
+
+    private void Cancelar()
+    {
+        mostrarFormulario = false;
+        mensaje = string.Empty;
+    }
+}

@@ -1,12 +1,11 @@
-@page "/vendedor"
+@page "/Premio"
 @rendermode InteractiveServer
 @inject FrontBlazor_AppiGenericaCsharp.Services.ApiService Api
-@inject IJSRuntime JS
 
-<PageTitle>Vendedores</PageTitle>
+<PageTitle>Premio</PageTitle>
 
 <div class="container mt-4">
-    <h3>Vendedores</h3>
+    <h3>Premio</h3>
 
     @* ───────── ALERTA ───────── *@
     @if (!string.IsNullOrEmpty(mensaje))
@@ -20,12 +19,12 @@
     @* ───────── BOTON NUEVO ───────── *@
     @if (!mostrarFormulario)
     {
-        <button class="btn btn-primary mb-3" @onclick="NuevoRegistro">Nuevo Vendedor</button>
+        <button class="btn btn-primary mb-3" @onclick="NuevoRegistro">Nuevo Premio</button>
     }
 
     @* ───────── LIMITE DE REGISTROS ───────── *@
     <div class="d-flex align-items-center mb-3">
-        <label class="form-label me-2 mb-0">Limite:</label>
+        <label class="form-label me-2 mb-0">Límite:</label>
         <input class="form-control me-2" type="number" style="width:100px" @bind="limite" />
         <button class="btn btn-outline-secondary" @onclick="CargarRegistros">Cargar</button>
     </div>
@@ -35,32 +34,41 @@
     {
         <div class="card mb-3">
             <div class="card-header">
-                @(editando ? "Editar Vendedor" : "Nuevo Vendedor")
+                @(editando ? "Editar Premio" : "Nuevo Premio")
             </div>
             <div class="card-body">
                 <div class="row">
-                    @if (editando)
-                    {
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">ID</label>
-                            <input class="form-control" value="@campoId" disabled />
-                        </div>
-                    }
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Carnet</label>
-                        <input class="form-control" type="number" @bind="campoCarnet" />
+                        <label class="form-label">id</label>
+                        <input class="form-control" @bind="campoid" disabled="@editando" />
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Direccion</label>
-                        <input class="form-control" @bind="campoDireccion" />
+                        <label class="form-label">nombre</label>
+                        <input class="form-control" @bind="camponombre" />
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Persona</label>
-                        <select class="form-select" @bind="campoFkcodpersona">
-                            <option value="">-- Seleccione --</option>
-                            @foreach (var p in personas)
+                        <label class="form-label">descripcion</label>
+                        <input class="form-control" @bind="campodescripcion" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">fecha</label>
+                        <input class="form-control" type="date" @bind="campofecha" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">entidad otorgante</label>
+                        <input class="form-control" @bind="campoentidad_otorgante" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">pais</label>
+                        <input class="form-control" @bind="campopais" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">programa</label>
+                        <select class="form-select" @bind="campoprograma">
+                            <option value="">-- Seleccione un programa --</option>
+                            @foreach (var p in programas)
                             {
-                                <option value="@p["codigo"]">@p["nombre"] (@p["codigo"])</option>
+                                <option value="@p["id"]">@p["nombre"]</option>
                             }
                         </select>
                     </div>
@@ -87,10 +95,13 @@
         <table class="table table-striped table-hover">
             <thead class="table-dark">
                 <tr>
-                    <th>ID</th>
-                    <th>Persona</th>
-                    <th>Carnet</th>
-                    <th>Direccion</th>
+                    <th>id</th>
+                    <th>nombre</th>
+                    <th>descripcion</th>
+                    <th>fecha</th>
+                    <th>entidad otorgante</th>
+                    <th>pais</th>
+                    <th>programa</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -99,9 +110,12 @@
                 {
                     <tr>
                         <td>@reg["id"]</td>
-                        <td>@ObtenerNombrePersona(reg["fkcodpersona"]?.ToString())</td>
-                        <td>@reg["carnet"]</td>
-                        <td>@reg["direccion"]</td>
+                        <td>@reg["nombre"]</td>
+                        <td>@reg["descripcion"]</td>
+                        <td>@reg["fecha"]</td>
+                        <td>@reg["entidad_otorgante"]</td>
+                        <td>@reg["pais"]</td>
+                        <td>@ObtenerNombrePrograma(reg["programa"]?.ToString())</td>
                         <td>
                             <button class="btn btn-warning btn-sm me-1"
                                     @onclick="() => EditarRegistro(reg)">Editar</button>
@@ -116,52 +130,63 @@
 
     @if (!cargando && !registros.Any())
     {
-        <div class="alert alert-warning">No se encontraron registros en la tabla vendedor.</div>
+        <div class="alert alert-warning">No se encontraron registros en la tabla Premio.</div>
     }
 </div>
 
 @code {
     private List<Dictionary<string, object?>> registros = new();
-    private List<Dictionary<string, object?>> personas = new();
+    private List<Dictionary<string, object?>> programas = new();
     private bool cargando = true;
     private bool mostrarFormulario = false;
     private bool editando = false;
     private string mensaje = string.Empty;
     private bool exito = false;
 
-    private string campoId = string.Empty;
-    private int campoCarnet = 0;
-    private string campoDireccion = string.Empty;
-    private string campoFkcodpersona = string.Empty;
+    // Campos del formulario
+    private string campoid = string.Empty;
+    private string camponombre = string.Empty;
+    private string campodescripcion = string.Empty;
+    private DateTime? campofecha = null;
+    private string campoentidad_otorgante = string.Empty;
+    private string campopais = string.Empty;
+    private string campoprograma = string.Empty;
     private int? limite = null;
 
     protected override async Task OnInitializedAsync()
     {
-        personas = await Api.ListarAsync("persona");
-        await CargarRegistros();
+        await Task.WhenAll(CargarRegistros(), CargarProgramas());
     }
 
     private async Task CargarRegistros()
     {
         cargando = true;
-        registros = await Api.ListarAsync("vendedor", limite);
+        registros = await Api.ListarAsync("premio", limite);
         cargando = false;
     }
 
-    private string ObtenerNombrePersona(string? codigo)
+    private async Task CargarProgramas()
     {
-        if (string.IsNullOrEmpty(codigo)) return "Sin persona";
-        var persona = personas.FirstOrDefault(p => p["codigo"]?.ToString() == codigo);
-        return persona?["nombre"]?.ToString() ?? codigo;
+        programas = await Api.ListarAsync("programa", null);
+    }
+
+    private string ObtenerNombrePrograma(string? id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var p = programas.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return p?["nombre"]?.ToString() ?? id;
     }
 
     private void NuevoRegistro()
     {
         editando = false;
-        campoId = string.Empty;
-        campoCarnet = 0;
-        campoDireccion = string.Empty;
-        campoFkcodpersona = string.Empty;
+        campoid = string.Empty;
+        camponombre = string.Empty;
+        campodescripcion = string.Empty;
+        campofecha = null;
+        campoentidad_otorgante = string.Empty;
+        campopais = string.Empty;
+        campoprograma = string.Empty;
         mostrarFormulario = true;
         mensaje = string.Empty;
     }
@@ -169,10 +194,13 @@
     private void EditarRegistro(Dictionary<string, object?> reg)
     {
         editando = true;
-        campoId = reg["id"]?.ToString() ?? "";
-        campoCarnet = int.TryParse(reg["carnet"]?.ToString(), out int c) ? c : 0;
-        campoDireccion = reg["direccion"]?.ToString() ?? "";
-        campoFkcodpersona = reg["fkcodpersona"]?.ToString() ?? "";
+        campoid = reg["id"]?.ToString() ?? "";
+        camponombre = reg["nombre"]?.ToString() ?? "";
+        campodescripcion = reg["descripcion"]?.ToString() ?? "";
+        campofecha = DateTime.TryParse(reg["fecha"]?.ToString(), out var f) ? f : null;
+        campoentidad_otorgante = reg["entidad_otorgante"]?.ToString() ?? "";
+        campopais = reg["pais"]?.ToString() ?? "";
+        campoprograma = reg["programa"]?.ToString() ?? "";
         mostrarFormulario = true;
         mensaje = string.Empty;
     }
@@ -181,23 +209,25 @@
     {
         var datos = new Dictionary<string, object?>
         {
-            ["carnet"] = campoCarnet,
-            ["direccion"] = campoDireccion,
-            ["fkcodpersona"] = campoFkcodpersona
+            ["id"] = campoid,
+            ["nombre"] = camponombre,
+            ["descripcion"] = campodescripcion,
+            ["fecha"] = campofecha?.ToString("yyyy-MM-dd"),
+            ["entidad_otorgante"] = campoentidad_otorgante,
+            ["pais"] = campopais,
+            ["programa"] = campoprograma
         };
 
         if (editando)
         {
-            var confirmar = await JS.InvokeAsync<bool>("confirm",
-                $"¿Está seguro de actualizar el Vendedor #{campoId}?");
-            if (!confirmar) return;
-            var resultado = await Api.ActualizarAsync("vendedor", "id", campoId, datos);
+            datos.Remove("id");
+            var resultado = await Api.ActualizarAsync("premio", "id", campoid, datos);
             exito = resultado.exito;
             mensaje = resultado.mensaje;
         }
         else
         {
-            var resultado = await Api.CrearAsync("vendedor", datos);
+            var resultado = await Api.CrearAsync("premio", datos);
             exito = resultado.exito;
             mensaje = resultado.mensaje;
         }
@@ -212,10 +242,7 @@
     private async Task EliminarRegistro(Dictionary<string, object?> reg)
     {
         string id = reg["id"]?.ToString() ?? "";
-        var confirmar = await JS.InvokeAsync<bool>("confirm",
-            $"¿Está seguro de eliminar el Vendedor #{id}?");
-        if (!confirmar) return;
-        var resultado = await Api.EliminarAsync("vendedor", "id", id);
+        var resultado = await Api.EliminarAsync("premio", "id", id);
         exito = resultado.exito;
         mensaje = resultado.mensaje;
 

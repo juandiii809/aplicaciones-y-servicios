@@ -28,7 +28,7 @@
 <div class="d-flex justify-content-center align-items-center" style="min-height:100vh;background:#f0f2f5">
     <div class="card shadow" style="width:400px">
         <div class="card-header text-center" style="background:var(--bs-primary, #0d6efd);color:white">
-            <h4 class="mb-0">FrontBlazorTutorial</h4>
+            <h4 class="mb-0">Bienvenido</h4>
         </div>
         <div class="card-body p-4">
             @if (!string.IsNullOrEmpty(error))
@@ -66,25 +66,28 @@
     string email = "", contrasena = "", error = "";
     bool cargando;
 
-    async Task DoLogin()
+   async Task DoLogin()
+{
+    error = "";
+    cargando = true;
+    var (ok, msg) = await auth.Login(email, contrasena);
+    cargando = false;
+    if (ok)
     {
-        error = "";
-        cargando = true;
-        var (ok, msg) = await auth.Login(email, contrasena);
-        cargando = false;
-        if (ok)
+      
+        if (auth.DebeCambiarContrasena || auth.DebeForcarCambio(email))
         {
-            // Si recupero contrasena, forzar cambio
-            if (auth.DebeCambiarContrasena || auth.DebeForcarCambio(email))
-            {
-                auth.DebeCambiarContrasena = true;
-                nav.NavigateTo("/cambiar-contrasena", forceLoad: false);
-            }
-            else
-                nav.NavigateTo("/", forceLoad: false);
+            auth.DebeCambiarContrasena = true;
+            nav.NavigateTo("/cambiar-contrasena", forceLoad: false);
         }
-        else error = msg;
+        else
+        {
+        
+            nav.NavigateTo("/acreditacion", forceLoad: false); 
+        }
     }
+    else error = msg;
+}
 
     async Task OnKeyPress(KeyboardEventArgs e)
     {

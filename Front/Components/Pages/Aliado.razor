@@ -1,0 +1,261 @@
+@page "/aliado"
+@rendermode InteractiveServer
+@using FrontBlazor_AppiGenericaCsharp.Services
+
+<PageTitle>Aliado</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Gestión de Aliados</h3>
+        @if (!mostrarFormulario)
+        {
+            <button class="btn btn-primary shadow" @onclick="NuevoRegistro">
+                <i class="bi bi-plus-circle"></i> Nuevo Aliado
+            </button>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(exito ? "alert-success" : "alert-danger") alert-dismissible fade show">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+        </div>
+    }
+
+    @if (mostrarFormulario)
+    {
+        <div class="card shadow border-primary mb-5">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">@(editando ? "Editar Aliado" : "Nuevo Aliado")</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">NIT</label>
+                        <input class="form-control" @bind="campoNit" disabled="@editando"
+                               placeholder="Ej: 900123456-1" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Razón Social</label>
+                        <input class="form-control" @bind="campoRazonSocial"
+                               placeholder="Nombre de la empresa o institución" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Nombre Contacto</label>
+                        <input class="form-control" @bind="campoNombreContacto"
+                               placeholder="Nombre del contacto principal" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Correo</label>
+                        <input class="form-control" type="email" @bind="campoCorreo"
+                               placeholder="correo@ejemplo.com" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Teléfono</label>
+                        <input class="form-control" @bind="campoTelefono"
+                               placeholder="Ej: 3001234567" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Ciudad</label>
+                        <input class="form-control" @bind="campoCiudad"
+                               placeholder="Ej: Medellín" />
+                    </div>
+                </div>
+                <div class="mt-3 text-end">
+                    <button class="btn btn-success px-4 me-2" @onclick="GuardarRegistro">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                    <button class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (cargando)
+    {
+        <div class="d-flex justify-content-center my-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+    else if (registros.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle border">
+                <thead class="table-dark">
+                    <tr>
+                        <th>NIT</th>
+                        <th>Razón Social</th>
+                        <th>Nombre Contacto</th>
+                        <th>Correo</th>
+                        <th>Teléfono</th>
+                        <th>Ciudad</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var reg in registros)
+                    {
+                        <tr>
+                            <td>@reg["nit"]</td>
+                            <td class="fw-bold">@reg["razon_social"]</td>
+                            <td>@reg["nombre_contacto"]</td>
+                            <td>@reg["correo"]</td>
+                            <td>@reg["telefono"]</td>
+                            <td>@reg["ciudad"]</td>
+                            <td class="text-center">
+                                <button class="btn btn-warning btn-sm me-1"
+                                        @onclick="() => EditarRegistro(reg)">
+                                    Editar
+                                </button>
+                                <button class="btn btn-danger btn-sm"
+                                        @onclick="() => EliminarRegistro(reg)">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">No hay aliados registrados.</div>
+    }
+</div>
+
+@code {
+    [Inject] private ApiService Api { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private List<Dictionary<string, object?>> registros = new();
+
+    private bool cargando = true;
+    private bool mostrarFormulario = false;
+    private bool editando = false;
+    private bool exito = false;
+    private string mensaje = "";
+
+    private string campoNit = "";
+    private string campoRazonSocial = "";
+    private string campoNombreContacto = "";
+    private string campoCorreo = "";
+    private string campoTelefono = "";
+    private string campoCiudad = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarRegistros();
+    }
+
+    private async Task CargarRegistros()
+    {
+        cargando = true;
+        registros = await Api.ListarAsync("aliado");
+        cargando = false;
+    }
+
+    private void NuevoRegistro()
+    {
+        editando = false;
+        campoNit = "";
+        campoRazonSocial = "";
+        campoNombreContacto = "";
+        campoCorreo = "";
+        campoTelefono = "";
+        campoCiudad = "";
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private void EditarRegistro(Dictionary<string, object?> reg)
+    {
+        editando = true;
+        campoNit = reg["nit"]?.ToString() ?? "";
+        campoRazonSocial = reg["razon_social"]?.ToString() ?? "";
+        campoNombreContacto = reg["nombre_contacto"]?.ToString() ?? "";
+        campoCorreo = reg["correo"]?.ToString() ?? "";
+        campoTelefono = reg["telefono"]?.ToString() ?? "";
+        campoCiudad = reg["ciudad"]?.ToString() ?? "";
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private async Task GuardarRegistro()
+    {
+        if (string.IsNullOrEmpty(campoNit))
+        {
+            mensaje = "El NIT es obligatorio.";
+            exito = false;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(campoRazonSocial))
+        {
+            mensaje = "La razón social es obligatoria.";
+            exito = false;
+            return;
+        }
+
+        var datos = new Dictionary<string, object?>
+        {
+            ["nit"]             = campoNit,
+            ["razon_social"]    = campoRazonSocial,
+            ["nombre_contacto"] = campoNombreContacto,
+            ["correo"]          = campoCorreo,
+            ["telefono"]        = campoTelefono,
+            ["ciudad"]          = campoCiudad
+        };
+
+        try
+        {
+            if (editando)
+            {
+                datos.Remove("nit");
+                var resultado = await Api.ActualizarAsync("aliado", "nit", campoNit, datos);
+                exito = resultado.exito;
+                mensaje = resultado.mensaje;
+            }
+            else
+            {
+                var resultado = await Api.CrearAsync("aliado", datos);
+                exito = resultado.exito;
+                mensaje = resultado.mensaje;
+            }
+
+            if (exito)
+            {
+                mostrarFormulario = false;
+                await CargarRegistros();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = "Error: " + ex.Message;
+            exito = false;
+        }
+    }
+
+    private async Task EliminarRegistro(Dictionary<string, object?> reg)
+    {
+        if (await JS.InvokeAsync<bool>("confirm",
+            $"¿Eliminar el aliado {reg["razon_social"]}?"))
+        {
+            var resultado = await Api.EliminarAsync("aliado", "nit", reg["nit"]?.ToString() ?? "");
+            exito = resultado.exito;
+            mensaje = resultado.mensaje;
+
+            if (exito)
+                await CargarRegistros();
+        }
+    }
+
+    private void Cancelar()
+    {
+        mostrarFormulario = false;
+        mensaje = string.Empty;
+    }
+}

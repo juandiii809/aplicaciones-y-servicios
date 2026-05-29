@@ -1,0 +1,355 @@
+@page "/programa_ac"
+@rendermode InteractiveServer
+@using FrontBlazor_AppiGenericaCsharp.Services
+
+<PageTitle>Áreas de Conocimiento por Programa</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Áreas de Conocimiento por Programa</h3>
+        @if (!mostrarFormulario)
+        {
+            <button class="btn btn-primary shadow" @onclick="NuevoRegistro">
+                <i class="bi bi-plus-circle"></i> Asignar Área de Conocimiento
+            </button>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(exito ? "alert-success" : "alert-danger") alert-dismissible fade show">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+        </div>
+    }
+
+    @if (mostrarFormulario)
+    {
+        <div class="card shadow border-primary mb-5">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">@(editando ? "Editando áreas del programa: " + ObtenerNombrePrograma(campoProgramaId.ToString()) : "Nueva Asignación")</h5>
+            </div>
+            <div class="card-body">
+
+                @* ── SELECCIÓN DE PROGRAMA ── *@
+                <div class="row border-bottom pb-3 mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Programa</label>
+                        <select class="form-select" @bind="campoProgramaId" disabled="@editando">
+                            <option value="0">-- Seleccione un programa --</option>
+                            @foreach (var p in programas)
+                            {
+                                <option value="@p["id"]">@p["nombre"]</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @* ── DETALLE AREA_CONOCIMIENTO ── *@
+                <h5 class="text-secondary mb-3">Áreas de Conocimiento</h5>
+                <div class="bg-light p-3 border rounded mb-3">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-10">
+                            <select class="form-select" @bind="tmpAreaId">
+                                <option value="0">-- Seleccione un área de conocimiento --</option>
+                                @foreach (var ac in areasConocimiento)
+                                {
+                                    @if (!detallesAreas.Any(x => x["area_conocimiento"]?.ToString() == ac["id"]?.ToString()))
+                                    {
+                                        <option value="@ac["id"]">@ac["gran_area"] — @ac["area"] — @ac["disciplina"]</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-info w-100" @onclick="AgregarAreaLocal">
+                                <i class="bi bi-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm table-hover bg-white border">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Gran Área</th>
+                                <th>Área</th>
+                                <th>Disciplina</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ac in detallesAreas)
+                            {
+                                <tr>
+                                    <td>@ac["area_conocimiento"]</td>
+                                    <td>@ObtenerCampoArea(ac["area_conocimiento"]?.ToString(), "gran_area")</td>
+                                    <td>@ObtenerCampoArea(ac["area_conocimiento"]?.ToString(), "area")</td>
+                                    <td>@ObtenerCampoArea(ac["area_conocimiento"]?.ToString(), "disciplina")</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                @onclick="() => detallesAreas.Remove(ac)">
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!detallesAreas.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No hay áreas de conocimiento asignadas</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 text-end">
+                    <button class="btn btn-success btn-lg px-5 shadow" @onclick="GuardarTodo">
+                        <i class="bi bi-save"></i> GUARDAR TODO
+                    </button>
+                    <button class="btn btn-secondary btn-lg ms-2" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @if (cargando)
+        {
+            <div class="d-flex justify-content-center my-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        }
+        else if (programasConAc.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle border">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID Programa</th>
+                            <th>Nombre Programa</th>
+                            <th>Áreas Asignadas</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var grupo in programasConAc)
+                        {
+                            <tr>
+                                <td>@grupo.Key</td>
+                                <td class="fw-bold">@ObtenerNombrePrograma(grupo.Key.ToString())</td>
+                                <td>
+                                    @foreach (var ac in grupo.Value)
+                                    {
+                                        <span class="badge bg-success me-1">
+                                            @ObtenerCampoArea(ac["area_conocimiento"]?.ToString(), "area")
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-warning btn-sm me-1"
+                                            @onclick="() => EditarRegistro(grupo.Key)">
+                                        Editar
+                                    </button>
+                                    <button class="btn btn-danger btn-sm"
+                                            @onclick="() => EliminarPrograma(grupo.Key)">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">No hay áreas de conocimiento asignadas a programas.</div>
+        }
+    }
+</div>
+
+@code {
+    [Inject] private ApiService Api { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private List<Dictionary<string, object?>> programas = new();
+    private List<Dictionary<string, object?>> areasConocimiento = new();
+    private List<Dictionary<string, object?>> todosRegistros = new();
+    private Dictionary<int, List<Dictionary<string, object?>>> programasConAc = new();
+    private List<Dictionary<string, object?>> detallesAreas = new();
+
+    private bool cargando = true;
+    private bool mostrarFormulario = false;
+    private bool editando = false;
+    private bool exito = false;
+    private string mensaje = "";
+
+    private int campoProgramaId = 0;
+    private int tmpAreaId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(CargarProgramas(), CargarAreasConocimiento());
+        await CargarRegistros();
+    }
+
+    private async Task CargarRegistros()
+    {
+        cargando = true;
+        todosRegistros = await Api.ListarAsync("programa_ac");
+
+        programasConAc = todosRegistros
+            .GroupBy(x => Convert.ToInt32(x["programa"]))
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        cargando = false;
+    }
+
+    private async Task CargarProgramas()
+    {
+        programas = await Api.ListarAsync("programa");
+    }
+
+    private async Task CargarAreasConocimiento()
+    {
+        areasConocimiento = await Api.ListarAsync("area_conocimiento");
+    }
+
+    private string ObtenerNombrePrograma(string? id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var p = programas.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return p?["nombre"]?.ToString() ?? id;
+    }
+
+    private string ObtenerCampoArea(string? id, string campo)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var ac = areasConocimiento.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return ac?[campo]?.ToString() ?? "";
+    }
+
+    private void AgregarAreaLocal()
+    {
+        if (tmpAreaId == 0) return;
+
+        if (detallesAreas.Any(x => x["area_conocimiento"]?.ToString() == tmpAreaId.ToString()))
+        {
+            mensaje = "Esa área de conocimiento ya está asignada.";
+            exito = false;
+            return;
+        }
+
+        detallesAreas.Add(new Dictionary<string, object?>
+        {
+            ["area_conocimiento"] = tmpAreaId,
+            ["programa"] = campoProgramaId
+        });
+
+        tmpAreaId = 0;
+        mensaje = string.Empty;
+    }
+
+    private async Task GuardarTodo()
+    {
+        if (campoProgramaId == 0)
+        {
+            mensaje = "Debe seleccionar un programa.";
+            exito = false;
+            return;
+        }
+
+        if (!detallesAreas.Any())
+        {
+            mensaje = "Debe agregar al menos un área de conocimiento.";
+            exito = false;
+            return;
+        }
+
+        try
+        {
+            // Eliminar asignaciones viejas
+            var viejos = todosRegistros
+                .Where(x => x["programa"]?.ToString() == campoProgramaId.ToString())
+                .ToList();
+
+            foreach (var v in viejos)
+                await Api.EliminarAsync("programa_ac", "programa", campoProgramaId.ToString());
+
+            // Insertar nuevas
+            foreach (var ac in detallesAreas)
+            {
+                var datos = new Dictionary<string, object?>
+                {
+                    ["area_conocimiento"] = ac["area_conocimiento"],
+                    ["programa"] = campoProgramaId
+                };
+                await Api.CrearAsync("programa_ac", datos);
+            }
+
+            mensaje = "Guardado con éxito";
+            exito = true;
+            mostrarFormulario = false;
+            await CargarRegistros();
+        }
+        catch (Exception ex)
+        {
+            mensaje = "Error: " + ex.Message;
+            exito = false;
+        }
+    }
+
+    private void NuevoRegistro()
+    {
+        editando = false;
+        campoProgramaId = 0;
+        tmpAreaId = 0;
+        detallesAreas.Clear();
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private async Task EditarRegistro(int programaId)
+    {
+        editando = true;
+        campoProgramaId = programaId;
+        tmpAreaId = 0;
+
+        detallesAreas = todosRegistros
+            .Where(x => x["programa"]?.ToString() == programaId.ToString())
+            .ToList();
+
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+        await Task.CompletedTask;
+    }
+
+    private async Task EliminarPrograma(int programaId)
+    {
+        if (await JS.InvokeAsync<bool>("confirm",
+            $"¿Eliminar todas las áreas de conocimiento del programa {ObtenerNombrePrograma(programaId.ToString())}?"))
+        {
+            var aEliminar = todosRegistros
+                .Where(x => x["programa"]?.ToString() == programaId.ToString())
+                .ToList();
+
+            foreach (var v in aEliminar)
+                await Api.EliminarAsync("programa_ac", "programa", programaId.ToString());
+
+            await CargarRegistros();
+            mensaje = "Eliminado con éxito";
+            exito = true;
+        }
+    }
+
+    private void Cancelar()
+    {
+        mostrarFormulario = false;
+        mensaje = string.Empty;
+        detallesAreas.Clear();
+    }
+}

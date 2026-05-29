@@ -1,0 +1,378 @@
+@page "/enfoque_rc"
+@rendermode InteractiveServer
+@using FrontBlazor_AppiGenericaCsharp.Services
+
+<PageTitle>Enfoques por Registro Calificado</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Enfoques por Registro Calificado</h3>
+        @if (!mostrarFormulario)
+        {
+            <button class="btn btn-primary shadow" @onclick="NuevoRegistro">
+                <i class="bi bi-plus-circle"></i> Asignar Enfoque
+            </button>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(exito ? "alert-success" : "alert-danger") alert-dismissible fade show">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+        </div>
+    }
+
+    @if (mostrarFormulario)
+    {
+        <div class="card shadow border-primary mb-5">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">@(editando ? "Editando enfoques del registro: " + ObtenerNombreRegistro(campoRegistroId.ToString()) : "Nueva Asignación")</h5>
+            </div>
+            <div class="card-body">
+
+                @* ── SELECCIÓN DE REGISTRO CALIFICADO ── *@
+                <div class="row border-bottom pb-3 mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Registro Calificado</label>
+                        <select class="form-select" @bind="campoRegistroId" disabled="@editando">
+                            <option value="0">-- Seleccione un registro calificado --</option>
+                            @foreach (var rc in registrosCalificados)
+                            {
+                                <option value="@rc["codigo"]">
+                                    @rc["codigo"] — @ObtenerNombrePrograma(rc["programa"]?.ToString())
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @* ── DETALLE ENFOQUES ── *@
+                <h5 class="text-secondary mb-3">Enfoques</h5>
+                <div class="bg-light p-3 border rounded mb-3">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-10">
+                            <select class="form-select" @bind="tmpEnfoqueId">
+                                <option value="0">-- Seleccione un enfoque --</option>
+                                @foreach (var e in enfoques)
+                                {
+                                    @if (!detallesEnfoques.Any(x => x["enfoque"]?.ToString() == e["id"]?.ToString()))
+                                    {
+                                        <option value="@e["id"]">@e["nombre"]</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-info w-100" @onclick="AgregarEnfoqueLocal">
+                                <i class="bi bi-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm table-hover bg-white border">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var e in detallesEnfoques)
+                            {
+                                <tr>
+                                    <td>@e["enfoque"]</td>
+                                    <td>@ObtenerCampoEnfoque(e["enfoque"]?.ToString(), "nombre")</td>
+                                    <td>@ObtenerCampoEnfoque(e["enfoque"]?.ToString(), "descripcion")</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                @onclick="() => detallesEnfoques.Remove(e)">
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!detallesEnfoques.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No hay enfoques asignados</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 text-end">
+                    <button class="btn btn-success btn-lg px-5 shadow" @onclick="GuardarTodo">
+                        <i class="bi bi-save"></i> GUARDAR TODO
+                    </button>
+                    <button class="btn btn-secondary btn-lg ms-2" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @if (cargando)
+        {
+            <div class="d-flex justify-content-center my-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        }
+        else if (registrosConEnfoque.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle border">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Código RC</th>
+                            <th>Programa</th>
+                            <th>Enfoques Asignados</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var grupo in registrosConEnfoque)
+                        {
+                            <tr>
+                                <td>@grupo.Key</td>
+                                <td class="fw-bold">@ObtenerNombreProgramaPorRC(grupo.Key.ToString())</td>
+                                <td>
+                                    @foreach (var e in grupo.Value)
+                                    {
+                                        <span class="badge bg-secondary me-1">
+                                            @ObtenerCampoEnfoque(e["enfoque"]?.ToString(), "nombre")
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-warning btn-sm me-1"
+                                            @onclick="() => EditarRegistro(grupo.Key)">
+                                        Editar
+                                    </button>
+                                    <button class="btn btn-danger btn-sm"
+                                            @onclick="() => EliminarRegistro(grupo.Key)">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">No hay enfoques asignados a registros calificados.</div>
+        }
+    }
+</div>
+
+@code {
+    [Inject] private ApiService Api { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private List<Dictionary<string, object?>> enfoques = new();
+    private List<Dictionary<string, object?>> registrosCalificados = new();
+    private List<Dictionary<string, object?>> programas = new();
+    private List<Dictionary<string, object?>> todosRegistros = new();
+    private Dictionary<int, List<Dictionary<string, object?>>> registrosConEnfoque = new();
+    private List<Dictionary<string, object?>> detallesEnfoques = new();
+
+    private bool cargando = true;
+    private bool mostrarFormulario = false;
+    private bool editando = false;
+    private bool exito = false;
+    private string mensaje = "";
+
+    private int campoRegistroId = 0;
+    private int tmpEnfoqueId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(CargarEnfoques(), CargarRegistrosCalificados(), CargarProgramas());
+        await CargarRegistros();
+    }
+
+    private async Task CargarRegistros()
+    {
+        cargando = true;
+        todosRegistros = await Api.ListarAsync("enfoque_rc");
+
+        registrosConEnfoque = todosRegistros
+            .GroupBy(x => Convert.ToInt32(x["registro_calificado"]))
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        cargando = false;
+    }
+
+    private async Task CargarEnfoques()
+    {
+        enfoques = await Api.ListarAsync("enfoque");
+    }
+
+    private async Task CargarRegistrosCalificados()
+    {
+        registrosCalificados = await Api.ListarAsync("registro_calificado");
+    }
+
+    private async Task CargarProgramas()
+    {
+        programas = await Api.ListarAsync("programa");
+    }
+
+    private string ObtenerNombreRegistro(string? codigo)
+    {
+        if (string.IsNullOrEmpty(codigo)) return "";
+        var rc = registrosCalificados.FirstOrDefault(x => x["codigo"]?.ToString() == codigo);
+        if (rc == null) return codigo;
+        var nombreProg = ObtenerNombrePrograma(rc["programa"]?.ToString());
+        return $"{codigo} — {nombreProg}";
+    }
+
+    private string ObtenerNombrePrograma(string? id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var p = programas.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return p?["nombre"]?.ToString() ?? id;
+    }
+
+    private string ObtenerNombreProgramaPorRC(string? codigo)
+    {
+        if (string.IsNullOrEmpty(codigo)) return "";
+        var rc = registrosCalificados.FirstOrDefault(x => x["codigo"]?.ToString() == codigo);
+        if (rc == null) return "";
+        return ObtenerNombrePrograma(rc["programa"]?.ToString());
+    }
+
+    private string ObtenerCampoEnfoque(string? id, string campo)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var e = enfoques.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return e?[campo]?.ToString() ?? "";
+    }
+
+    private void AgregarEnfoqueLocal()
+    {
+        if (tmpEnfoqueId == 0) return;
+
+        if (detallesEnfoques.Any(x => x["enfoque"]?.ToString() == tmpEnfoqueId.ToString()))
+        {
+            mensaje = "Ese enfoque ya está asignado.";
+            exito = false;
+            return;
+        }
+
+        detallesEnfoques.Add(new Dictionary<string, object?>
+        {
+            ["enfoque"] = tmpEnfoqueId,
+            ["registro_calificado"] = campoRegistroId
+        });
+
+        tmpEnfoqueId = 0;
+        mensaje = string.Empty;
+    }
+
+    private async Task GuardarTodo()
+    {
+        if (campoRegistroId == 0)
+        {
+            mensaje = "Debe seleccionar un registro calificado.";
+            exito = false;
+            return;
+        }
+
+        if (!detallesEnfoques.Any())
+        {
+            mensaje = "Debe agregar al menos un enfoque.";
+            exito = false;
+            return;
+        }
+
+        try
+        {
+            // Eliminar asignaciones viejas
+            var viejos = todosRegistros
+                .Where(x => x["registro_calificado"]?.ToString() == campoRegistroId.ToString())
+                .ToList();
+
+            foreach (var v in viejos)
+                await Api.EliminarAsync("enfoque_rc", "registro_calificado", campoRegistroId.ToString());
+
+            // Insertar nuevas
+            foreach (var e in detallesEnfoques)
+            {
+                var datos = new Dictionary<string, object?>
+                {
+                    ["enfoque"] = e["enfoque"],
+                    ["registro_calificado"] = campoRegistroId
+                };
+                await Api.CrearAsync("enfoque_rc", datos);
+            }
+
+            mensaje = "Guardado con éxito";
+            exito = true;
+            mostrarFormulario = false;
+            await CargarRegistros();
+        }
+        catch (Exception ex)
+        {
+            mensaje = "Error: " + ex.Message;
+            exito = false;
+        }
+    }
+
+    private void NuevoRegistro()
+    {
+        editando = false;
+        campoRegistroId = 0;
+        tmpEnfoqueId = 0;
+        detallesEnfoques.Clear();
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private async Task EditarRegistro(int registroId)
+    {
+        editando = true;
+        campoRegistroId = registroId;
+        tmpEnfoqueId = 0;
+
+        detallesEnfoques = todosRegistros
+            .Where(x => x["registro_calificado"]?.ToString() == registroId.ToString())
+            .ToList();
+
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+        await Task.CompletedTask;
+    }
+
+    private async Task EliminarRegistro(int registroId)
+    {
+        if (await JS.InvokeAsync<bool>("confirm",
+            $"¿Eliminar todos los enfoques del registro calificado {registroId}?"))
+        {
+            var aEliminar = todosRegistros
+                .Where(x => x["registro_calificado"]?.ToString() == registroId.ToString())
+                .ToList();
+
+            foreach (var v in aEliminar)
+                await Api.EliminarAsync("enfoque_rc", "registro_calificado", registroId.ToString());
+
+            await CargarRegistros();
+            mensaje = "Eliminado con éxito";
+            exito = true;
+        }
+    }
+
+    private void Cancelar()
+    {
+        mostrarFormulario = false;
+        mensaje = string.Empty;
+        detallesEnfoques.Clear();
+    }
+}

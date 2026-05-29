@@ -1,0 +1,331 @@
+@page "/Activ_academica"
+@rendermode InteractiveServer
+@inject FrontBlazor_AppiGenericaCsharp.Services.ApiService Api
+
+<PageTitle>Actividad Académica</PageTitle>
+
+<div class="container mt-4">
+    <h3>Actividad Académica</h3>
+
+    @* ───────── ALERTA ───────── *@
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(exito ? "alert-success" : "alert-danger") alert-dismissible fade show">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+        </div>
+    }
+
+    @* ───────── BOTON NUEVO ───────── *@
+    @if (!mostrarFormulario)
+    {
+        <button class="btn btn-primary mb-3" @onclick="NuevoRegistro">Nueva Actividad Académica</button>
+    }
+
+    @* ───────── LIMITE DE REGISTROS ───────── *@
+    <div class="d-flex align-items-center mb-3">
+        <label class="form-label me-2 mb-0">Límite:</label>
+        <input class="form-control me-2" type="number" style="width:100px" @bind="limite" />
+        <button class="btn btn-outline-secondary" @onclick="CargarRegistros">Cargar</button>
+    </div>
+
+    @* ───────── FORMULARIO ───────── *@
+    @if (mostrarFormulario)
+    {
+        <div class="card mb-3">
+            <div class="card-header">
+                @(editando ? "Editar Actividad Académica" : "Nueva Actividad Académica")
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">id</label>
+                        <input class="form-control" @bind="campoid" disabled="@editando" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">nombre</label>
+                        <input class="form-control" @bind="camponombre" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">num_creditos</label>
+                        <input class="form-control" type="number" @bind="camponum_creditos" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">tipo</label>
+                        <select class="form-select" @bind="campotipo">
+                            <option value="">-- Seleccione --</option>
+                            <option value="Obligatoria">Obligatoria</option>
+                            <option value="Electiva">Electiva</option>
+                            <option value="Complementaria">Complementaria</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">area_formacion</label>
+                        <input class="form-control" @bind="campoarea_formacion" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">h_acom</label>
+                        <input class="form-control" type="number" @bind="campoh_acom" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">h_indep</label>
+                        <input class="form-control" type="number" @bind="campoh_indep" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">idioma</label>
+                        <input class="form-control" @bind="campoidioma" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">espejo</label>
+                        <input type="checkbox" class="form-check-input ms-2"
+                               @bind="campoespejo"
+                               @bind:after="LimpiarEspejo" />
+                    </div>
+
+                    @* Campos espejo solo visibles si espejo = true *@
+                    @if (campoespejo)
+                    {
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">entidad_espejo</label>
+                            <input class="form-control" @bind="campoentidad_espejo" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">pais_espejo</label>
+                            <input class="form-control" @bind="campopais_espejo" />
+                        </div>
+                    }
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">diseño (programa)</label>
+                        <select class="form-select" @bind="campodisenio">
+                            <option value="">-- Seleccione un programa --</option>
+                            @foreach (var p in programas)
+                            {
+                                <option value="@p["id"]">@p["nombre"]</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-success me-2" @onclick="GuardarRegistro">Guardar</button>
+                <button class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+            </div>
+        </div>
+    }
+
+    @* ───────── SPINNER ───────── *@
+    @if (cargando)
+    {
+        <div class="d-flex justify-content-center my-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    }
+
+    @* ───────── TABLA ───────── *@
+    @if (!cargando && registros.Any())
+    {
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>id</th>
+                    <th>nombre</th>
+                    <th>num_creditos</th>
+                    <th>tipo</th>
+                    <th>area_formacion</th>
+                    <th>h_acom</th>
+                    <th>h_indep</th>
+                    <th>idioma</th>
+                    <th>espejo</th>
+                    <th>entidad_espejo</th>
+                    <th>pais_espejo</th>
+                    <th>diseño</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var reg in registros)
+                {
+                    <tr>
+                        <td>@reg["id"]</td>
+                        <td>@reg["nombre"]</td>
+                        <td>@reg["num_creditos"]</td>
+                        <td>@reg["tipo"]</td>
+                        <td>@reg["area_formacion"]</td>
+                        <td>@reg["h_acom"]</td>
+                        <td>@reg["h_indep"]</td>
+                        <td>@reg["idioma"]</td>
+                        <td>@(reg["espejo"]?.ToString() == "True" ? "Sí" : "No")</td>
+                        <td>@reg["entidad_espejo"]</td>
+                        <td>@reg["pais_espejo"]</td>
+                        <td>@ObtenerNombrePrograma(reg["disenio"]?.ToString())</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm me-1"
+                                    @onclick="() => EditarRegistro(reg)">Editar</button>
+                            <button class="btn btn-danger btn-sm"
+                                    @onclick="() => EliminarRegistro(reg)">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (!cargando && !registros.Any())
+    {
+        <div class="alert alert-warning">No se encontraron registros en la tabla Actividad Académica.</div>
+    }
+</div>
+
+@code {
+    private List<Dictionary<string, object?>> registros = new();
+    private List<Dictionary<string, object?>> programas = new();
+    private bool cargando = true;
+    private bool mostrarFormulario = false;
+    private bool editando = false;
+    private string mensaje = string.Empty;
+    private bool exito = false;
+
+    // Campos del formulario
+    private string campoid = string.Empty;
+    private string camponombre = string.Empty;
+    private int campohnum_creditos = 0;
+    private int camponum_creditos = 0;
+    private string campotipo = string.Empty;
+    private string campoarea_formacion = string.Empty;
+    private int campoh_acom = 0;
+    private int campoh_indep = 0;
+    private string campoidioma = string.Empty;
+    private bool campoespejo = false;
+    private string campoentidad_espejo = string.Empty;
+    private string campopais_espejo = string.Empty;
+    private string campodisenio = string.Empty;
+    private int? limite = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(CargarRegistros(), CargarProgramas());
+    }
+
+    private async Task CargarRegistros()
+    {
+        cargando = true;
+        registros = await Api.ListarAsync("activ_academica", limite);
+        cargando = false;
+    }
+
+    private async Task CargarProgramas()
+    {
+        programas = await Api.ListarAsync("programa", null);
+    }
+
+    private string ObtenerNombrePrograma(string? id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var p = programas.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return p?["nombre"]?.ToString() ?? id;
+    }
+
+    private void LimpiarEspejo()
+    {
+        if (!campoespejo)
+        {
+            campoentidad_espejo = string.Empty;
+            campopais_espejo = string.Empty;
+        }
+    }
+
+    private void NuevoRegistro()
+    {
+        editando = false;
+        campoid = string.Empty;
+        camponombre = string.Empty;
+        camponum_creditos = 0;
+        campotipo = string.Empty;
+        campoarea_formacion = string.Empty;
+        campoh_acom = 0;
+        campoh_indep = 0;
+        campoidioma = string.Empty;
+        campoespejo = false;
+        campoentidad_espejo = string.Empty;
+        campopais_espejo = string.Empty;
+        campodisenio = string.Empty;
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private void EditarRegistro(Dictionary<string, object?> reg)
+    {
+        editando = true;
+        campoid = reg["id"]?.ToString() ?? "";
+        camponombre = reg["nombre"]?.ToString() ?? "";
+        camponum_creditos = int.TryParse(reg["num_creditos"]?.ToString(), out var nc) ? nc : 0;
+        campotipo = reg["tipo"]?.ToString() ?? "";
+        campoarea_formacion = reg["area_formacion"]?.ToString() ?? "";
+        campoh_acom = int.TryParse(reg["h_acom"]?.ToString(), out var ha) ? ha : 0;
+        campoh_indep = int.TryParse(reg["h_indep"]?.ToString(), out var hi) ? hi : 0;
+        campoidioma = reg["idioma"]?.ToString() ?? "";
+        campoespejo = reg["espejo"]?.ToString() == "True";
+        campoentidad_espejo = reg["entidad_espejo"]?.ToString() ?? "";
+        campopais_espejo = reg["pais_espejo"]?.ToString() ?? "";
+        campodisenio = reg["disenio"]?.ToString() ?? "";
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private async Task GuardarRegistro()
+    {
+        var datos = new Dictionary<string, object?>
+        {
+            ["id"] = campoid,
+            ["nombre"] = camponombre,
+            ["num_creditos"] = camponum_creditos,
+            ["tipo"] = campotipo,
+            ["area_formacion"] = campoarea_formacion,
+            ["h_acom"] = campoh_acom,
+            ["h_indep"] = campoh_indep,
+            ["idioma"] = campoidioma,
+            ["espejo"] = campoespejo,
+            ["entidad_espejo"] = campoentidad_espejo,
+            ["pais_espejo"] = campopais_espejo,
+            ["disenio"] = string.IsNullOrEmpty(campodisenio) ? null : campodisenio
+        };
+
+        if (editando)
+        {
+            datos.Remove("id");
+            var resultado = await Api.ActualizarAsync("activ_academica", "id", campoid, datos);
+            exito = resultado.exito;
+            mensaje = resultado.mensaje;
+        }
+        else
+        {
+            var resultado = await Api.CrearAsync("activ_academica", datos);
+            exito = resultado.exito;
+            mensaje = resultado.mensaje;
+        }
+
+        if (exito)
+        {
+            mostrarFormulario = false;
+            await CargarRegistros();
+        }
+    }
+
+    private async Task EliminarRegistro(Dictionary<string, object?> reg)
+    {
+        string id = reg["id"]?.ToString() ?? "";
+        var resultado = await Api.EliminarAsync("activ_academica", "id", id);
+        exito = resultado.exito;
+        mensaje = resultado.mensaje;
+
+        if (exito)
+            await CargarRegistros();
+    }
+
+    private void Cancelar()
+    {
+        mostrarFormulario = false;
+        mensaje = string.Empty;
+    }
+}

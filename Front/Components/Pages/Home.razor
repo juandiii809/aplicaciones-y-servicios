@@ -1,88 +1,187 @@
 @page "/"
-@inject FrontBlazor_AppiGenericaCsharp.Services.ApiService Api
+@using Components.Layout
+@layout EmptyLayout
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
 
-<PageTitle>CRUD Facturas</PageTitle>
+<div class="corporate-site">
+    <!-- ENCABEZADO / NAVBAR -->
+    <header class="navbar-corporate">
+        <div class="logo-container">
+    <img src="images/logo.png" alt="ISolutions" style="height: 30px; width: auto;" />
+    <span class="logo-text">ISolutions</span>
+</div>
+        
+        <nav class="nav-menu">
+            <a href="#inicio" class="nav-link active">Inicio</a>
+            <a href="#servicios" class="nav-link">Servicios</a>
+            <a href="#nosotros" class="nav-link">Sobre Nosotros</a>
+            <a href="#soporte" class="nav-link">Soporte</a>
+            <a href="#contacto" class="nav-link">Contacto</a>
+        </nav>
 
-<div class="container mt-4">
-    <h1>CRUD - Base de Datos</h1>
-    <p class="lead">
-        Frontend Blazor que consume la API generica
-        <strong>ApiGenericaCsharp</strong> para gestionar tablas
-        de una base de datos.
-    </p>
+        <div class="auth-action">
+            <button class="btn-login" @onclick="NavigateToLogin">
+                <span class="icon-user">👤</span> Iniciar Sesión
+            </button>
+        </div>
+    </header>
 
-    <div class="alert alert-info">
-        <strong>Tablas disponibles:</strong> Producto, Persona, Usuario, Empresa, Rol, Ruta, Cliente, Vendedor, Factura.
-        <br />
-        Use el menu lateral para navegar a cada tabla.
+    <!-- CUERPO DE LA PÁGINA (SECCIONES) -->
+    <main class="main-content">
+        
+        <!-- SECCIÓN: INICIO / HERO -->
+        <section id="inicio" class="hero-section">
+            <div class="hero-text">
+                <span class="badge-tech">MÓDULO DE INNOVACIÓN CURRICULAR</span>
+                <h1>Transformamos el Conocimiento Universitario en Impacto Real</h1>
+                <p class="value-proposition">
+                    Optimizamos la gestión académica con infraestructura de datos avanzada, conectando planes de estudio con las demandas del entorno profesional de forma ágil e inteligente.
+                </p>
+                <div class="cta-container">
+                    <a href="#contacto" class="btn-primary">Solicita una Demo</a>
+                    <a href="#servicios" class="btn-secondary">Ver Planes</a>
+                </div>
+            </div>
+       <div class="hero-graphic">
+    <div class="tech-card-wrapper">
+        <div class="corporate-badge-large">
+            <img src="images/logo.png" alt="ISolutions Logo" class="hero-logo-full" />
+        </div>
     </div>
+</div>
+        </section>
 
-    @if (diagnostico != null)
-    {
-        <div class="card mt-4 border-secondary">
-            <div class="card-header bg-secondary bg-opacity-10 text-muted py-2">
-                <small><strong>Conexion activa</strong></small>
+        <!-- SECCIÓN: TESTIMONIOS (CASOS DE ÉXITO) -->
+        <section class="testimonials-summary">
+            <div class="testimonial-card">
+                <p class="quote">"La reestructuración de nuestras mallas curriculares pasó de tardar meses a resolverse en días gracias a su plataforma."</p>
+                <h4>- Dirección de Calidad Académica, ITM</h4>
             </div>
-            <div class="card-body py-2">
-                <table class="table table-sm table-borderless mb-0" style="font-size: 0.85rem;">
-                    <tbody>
-                        @if (diagnostico.ContainsKey("proveedor"))
-                        {
-                            <tr>
-                                <td class="text-muted" style="width:160px">Proveedor</td>
-                                <td><strong>@diagnostico["proveedor"]</strong></td>
-                            </tr>
-                        }
-                        @if (diagnostico.ContainsKey("baseDatos"))
-                        {
-                            <tr>
-                                <td class="text-muted">Base de datos</td>
-                                <td><strong>@diagnostico["baseDatos"]</strong></td>
-                            </tr>
-                        }
-                        @if (diagnostico.ContainsKey("version"))
-                        {
-                            <tr>
-                                <td class="text-muted">Version</td>
-                                <td><small>@(diagnostico["version"].Length > 80 ? diagnostico["version"][..80] + "..." : diagnostico["version"])</small></td>
-                            </tr>
-                        }
-                        @if (diagnostico.ContainsKey("direccionIP"))
-                        {
-                            <tr>
-                                <td class="text-muted">Servidor</td>
-                                <td>
-                                    @diagnostico["direccionIP"]@if (diagnostico.ContainsKey("puerto")){<text>:@diagnostico["puerto"]</text>}
-                                </td>
-                            </tr>
-                        }
-                        @if (diagnostico.ContainsKey("usuarioConectado"))
-                        {
-                            <tr>
-                                <td class="text-muted">Usuario</td>
-                                <td>@diagnostico["usuarioConectado"]</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+        </section>
+
+        <!-- SECCIÓN: PRODUCTOS / SERVICIOS -->
+        <section id="servicios" class="section-container">
+            <h2 class="section-title">Nuestros Servicios Destacados</h2>
+            <div class="grid-three-columns">
+                <div class="card-service">
+                    <div class="card-icon">📊</div>
+                    <h3>Innovación Curricular</h3>
+                    <p>Diseño y actualización automatizada de mallas académicas bajo normativas vigentes.</p>
+                </div>
+                <div class="card-service">
+                    <div class="card-icon">🔌</div>
+                    <h3>Integración de Datos</h3>
+                    <p>Conexión directa y segura con servidores SQL Server para auditorías en tiempo real.</p>
+                </div>
+                <div class="card-service">
+                    <div class="card-icon">🎯</div>
+                    <h3>Enfoque por Competencias</h3>
+                    <p>Mapeo inteligente de rutas de aprendizaje orientadas al éxito del egresado.</p>
+                </div>
             </div>
-        </div>
-    }
-    else if (cargado)
-    {
-        <div class="mt-4">
-            <small class="text-muted">No se pudo obtener informacion de conexion de la API.</small>
-        </div>
-    }
+        </section>
+
+        <!-- SECCIÓN: SOBRE NOSOTROS -->
+        <section id="nosotros" class="section-container bg-alt">
+            <div class="about-wrapper">
+                <div>
+                    <h2 class="section-title text-left">Sobre Nosotros</h2>
+                    <p class="text-block">
+                        <strong>Nuestra Misión:</strong> Empoderar a las instituciones de educación superior mediante herramientas de software robustas que simplifiquen la toma de decisiones estratégicas.
+                    </p>
+                    <p class="text-block">
+                        Nuestra cultura se basa en la precisión técnica, la seguridad de la información y la excelencia en el desarrollo de software educativo.
+                    </p>
+                </div>
+                <div class="team-preview">
+                    <h3>Liderazgo Experto</h3>
+                    <div class="team-grid">
+                        <div class="team-member">
+                            <div class="member-avatar">👩‍💻</div>
+                            <h4>Valentina C.</h4>
+                            <p>Directora de Infraestructura & DB</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN: SOPORTE -->
+        <section id="soporte" class="section-container">
+            <h2 class="section-title">Centro de Soporte y Ayuda</h2>
+            <div class="grid-two-columns">
+                <div class="support-box">
+                    <h3>¿Necesitas ayuda técnica?</h3>
+                    <p>Accede a nuestra documentación técnica completa o abre un ticket de soporte con nuestro equipo de ingeniería.</p>
+                    <ul class="support-list">
+                        <li>📚 Documentación API y Swagger</li>
+                        <li>💬 Chat en vivo 24/7</li>
+                        <li>🎫 Sistema de Tickets de soporte</li>
+                    </ul>
+                </div>
+                <div class="faq-box">
+                    <h3>Preguntas Frecuentes</h3>
+                    <details>
+                        <summary>¿Qué bases de datos soporta el sistema?</summary>
+                        <p>Está optimizado de manera nativa para entornos Microsoft SQL Server 2022 en adelante.</p>
+                    </details>
+                    <details>
+                        <summary>¿Cómo solicito una prueba gratuita?</summary>
+                        <p>Puedes dejarnos tus datos en el formulario inferior y un asesor agendará tu demo.</p>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN: CONTACTO -->
+        <section id="contacto" class="section-container bg-dark">
+            <h2 class="section-title text-white">Ponte en Contacto</h2>
+            <div class="grid-two-columns">
+                <form class="corporate-form" @onsubmit="HandleSubmit">
+                    <div class="form-group">
+                        <label>Nombre Completo</label>
+                        <input type="text" placeholder="Ej. Juan Pérez" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Correo Institucional</label>
+                        <input type="email" placeholder="nombre@universidad.edu" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Mensaje</label>
+                        <textarea rows="4" placeholder="Cuéntanos sobre tus necesidades curriculares..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary width-100">Enviar Mensaje</button>
+                </form>
+                <div class="direct-contact-info">
+                    <h3>Información Directa</h3>
+                    <p>📍 Medellín, Antioquia, Colombia</p>
+                    <p>📧 soporte@innovatech.edu.co</p>
+                    <p>📞 +57 (604) 123-4567</p>
+                    <div class="social-links">
+                        <a href="#" class="social-icon">💼 LinkedIn</a>
+                        <a href="#" class="social-icon">🐙 GitHub</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PIE DE PÁGINA / FOOTER -->
+    <footer class="footer-corporate">
+        <p>&copy; 2026 InnovaTech Solutions. Todos los derechos reservados. Módulo de Innovación Curricular SIGICU.</p>
+    </footer>
 </div>
 
 @code {
-    private Dictionary<string, string>? diagnostico;
-    private bool cargado;
-
-    protected override async Task OnInitializedAsync()
+    private void NavigateToLogin()
     {
-        diagnostico = await Api.ObtenerDiagnosticoAsync();
-        cargado = true;
+        Navigation.NavigateTo("/login");// Aquí rediriges a tu pantalla existente de inicio de sesión
+    }
+
+    private void HandleSubmit()
+    {
+        // Lógica para procesar el formulario de contacto
     }
 }

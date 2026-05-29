@@ -1,0 +1,421 @@
+@page "/aa_rc"
+@rendermode InteractiveServer
+@using FrontBlazor_AppiGenericaCsharp.Services
+
+<PageTitle>Actividades Académicas por Registro Calificado</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Actividades Académicas por Registro Calificado</h3>
+        @if (!mostrarFormulario)
+        {
+            <button class="btn btn-primary shadow" @onclick="NuevoRegistro">
+                <i class="bi bi-plus-circle"></i> Asignar Actividad Académica
+            </button>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(exito ? "alert-success" : "alert-danger") alert-dismissible fade show">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+        </div>
+    }
+
+    @if (mostrarFormulario)
+    {
+        <div class="card shadow border-primary mb-5">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">@(editando ? "Editando actividades del registro: " + ObtenerNombreRegistro(campoRegistroId.ToString()) : "Nueva Asignación")</h5>
+            </div>
+            <div class="card-body">
+
+                @* ── SELECCIÓN DE REGISTRO CALIFICADO ── *@
+                <div class="row border-bottom pb-3 mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Registro Calificado</label>
+                        <select class="form-select" @bind="campoRegistroId" disabled="@editando">
+                            <option value="0">-- Seleccione un registro calificado --</option>
+                            @foreach (var rc in registrosCalificados)
+                            {
+                                <option value="@rc["codigo"]">
+                                    @rc["codigo"] — @ObtenerNombrePrograma(rc["programa"]?.ToString())
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @* ── DETALLE ACTIVIDADES ACADÉMICAS ── *@
+                <h5 class="text-secondary mb-3">Actividades Académicas</h5>
+                <div class="bg-light p-3 border rounded mb-3">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="small fw-bold">Actividad Académica</label>
+                            <select class="form-select" @bind="tmpActividadId">
+                                <option value="0">-- Seleccione una actividad --</option>
+                                @foreach (var aa in actividadesAcademicas)
+                                {
+                                    @if (!detallesActividades.Any(x => x["activ_academicas_idcurso"]?.ToString() == aa["id"]?.ToString()))
+                                    {
+                                        <option value="@aa["id"]">@aa["nombre"]</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small fw-bold">Componente</label>
+                            <input class="form-control" placeholder="Ej: Disciplinar" @bind="tmpComponente" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small fw-bold">Semestre</label>
+                            <input class="form-control" placeholder="Ej: 1" @bind="tmpSemestre" />
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-info w-100" @onclick="AgregarActividadLocal">
+                                <i class="bi bi-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm table-hover bg-white border">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre Actividad</th>
+                                <th>Tipo</th>
+                                <th>Créditos</th>
+                                <th>Componente</th>
+                                <th>Semestre</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var aa in detallesActividades)
+                            {
+                                <tr>
+                                    <td>@aa["activ_academicas_idcurso"]</td>
+                                    <td>@ObtenerCampoActividad(aa["activ_academicas_idcurso"]?.ToString(), "nombre")</td>
+                                    <td>@ObtenerCampoActividad(aa["activ_academicas_idcurso"]?.ToString(), "tipo")</td>
+                                    <td>@ObtenerCampoActividad(aa["activ_academicas_idcurso"]?.ToString(), "num_creditos")</td>
+                                    <td>@aa["componente"]</td>
+                                    <td>@aa["semestre"]</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                @onclick="() => detallesActividades.Remove(aa)">
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!detallesActividades.Any())
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">No hay actividades académicas asignadas</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 text-end">
+                    <button class="btn btn-success btn-lg px-5 shadow" @onclick="GuardarTodo">
+                        <i class="bi bi-save"></i> GUARDAR TODO
+                    </button>
+                    <button class="btn btn-secondary btn-lg ms-2" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @if (cargando)
+        {
+            <div class="d-flex justify-content-center my-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        }
+        else if (registrosConActividades.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle border">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Código RC</th>
+                            <th>Programa</th>
+                            <th>Actividades Asignadas</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var grupo in registrosConActividades)
+                        {
+                            <tr>
+                                <td>@grupo.Key</td>
+                                <td class="fw-bold">@ObtenerNombreProgramaPorRC(grupo.Key.ToString())</td>
+                                <td>
+                                    @foreach (var aa in grupo.Value)
+                                    {
+                                        <span class="badge bg-primary me-1">
+                                            @ObtenerCampoActividad(aa["activ_academicas_idcurso"]?.ToString(), "nombre")
+                                            <small class="ms-1 opacity-75">S@aa["semestre"]</small>
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-warning btn-sm me-1"
+                                            @onclick="() => EditarRegistro(grupo.Key)">
+                                        Editar
+                                    </button>
+                                    <button class="btn btn-danger btn-sm"
+                                            @onclick="() => EliminarRegistro(grupo.Key)">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">No hay actividades académicas asignadas a registros calificados.</div>
+        }
+    }
+</div>
+
+@code {
+    [Inject] private ApiService Api { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private List<Dictionary<string, object?>> actividadesAcademicas = new();
+    private List<Dictionary<string, object?>> registrosCalificados = new();
+    private List<Dictionary<string, object?>> programas = new();
+    private List<Dictionary<string, object?>> todosRegistros = new();
+    private Dictionary<int, List<Dictionary<string, object?>>> registrosConActividades = new();
+    private List<Dictionary<string, object?>> detallesActividades = new();
+
+    private bool cargando = true;
+    private bool mostrarFormulario = false;
+    private bool editando = false;
+    private bool exito = false;
+    private string mensaje = "";
+
+    private int campoRegistroId = 0;
+    private int tmpActividadId = 0;
+    private string tmpComponente = "";
+    private string tmpSemestre = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(CargarActividadesAcademicas(), CargarRegistrosCalificados(), CargarProgramas());
+        await CargarRegistros();
+    }
+
+    private async Task CargarRegistros()
+    {
+        cargando = true;
+        todosRegistros = await Api.ListarAsync("aa_rc");
+
+        registrosConActividades = todosRegistros
+            .GroupBy(x => Convert.ToInt32(x["registro_calificado_codigo"]))
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        cargando = false;
+    }
+
+    private async Task CargarActividadesAcademicas()
+    {
+        actividadesAcademicas = await Api.ListarAsync("activ_academica");
+    }
+
+    private async Task CargarRegistrosCalificados()
+    {
+        registrosCalificados = await Api.ListarAsync("registro_calificado");
+    }
+
+    private async Task CargarProgramas()
+    {
+        programas = await Api.ListarAsync("programa");
+    }
+
+    private string ObtenerNombreRegistro(string? codigo)
+    {
+        if (string.IsNullOrEmpty(codigo)) return "";
+        var rc = registrosCalificados.FirstOrDefault(x => x["codigo"]?.ToString() == codigo);
+        if (rc == null) return codigo;
+        return $"{codigo} — {ObtenerNombrePrograma(rc["programa"]?.ToString())}";
+    }
+
+    private string ObtenerNombrePrograma(string? id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var p = programas.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return p?["nombre"]?.ToString() ?? id;
+    }
+
+    private string ObtenerNombreProgramaPorRC(string? codigo)
+    {
+        if (string.IsNullOrEmpty(codigo)) return "";
+        var rc = registrosCalificados.FirstOrDefault(x => x["codigo"]?.ToString() == codigo);
+        if (rc == null) return "";
+        return ObtenerNombrePrograma(rc["programa"]?.ToString());
+    }
+
+    private string ObtenerCampoActividad(string? id, string campo)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var aa = actividadesAcademicas.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return aa?[campo]?.ToString() ?? "";
+    }
+
+    private void AgregarActividadLocal()
+    {
+        if (tmpActividadId == 0) return;
+
+        if (string.IsNullOrEmpty(tmpComponente))
+        {
+            mensaje = "Debe ingresar el componente.";
+            exito = false;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(tmpSemestre))
+        {
+            mensaje = "Debe ingresar el semestre.";
+            exito = false;
+            return;
+        }
+
+        if (detallesActividades.Any(x => x["activ_academicas_idcurso"]?.ToString() == tmpActividadId.ToString()))
+        {
+            mensaje = "Esa actividad académica ya está asignada.";
+            exito = false;
+            return;
+        }
+
+        detallesActividades.Add(new Dictionary<string, object?>
+        {
+            ["activ_academicas_idcurso"] = tmpActividadId,
+            ["registro_calificado_codigo"] = campoRegistroId,
+            ["componente"] = tmpComponente,
+            ["semestre"] = tmpSemestre
+        });
+
+        tmpActividadId = 0;
+        tmpComponente = "";
+        tmpSemestre = "";
+        mensaje = string.Empty;
+    }
+
+    private async Task GuardarTodo()
+    {
+        if (campoRegistroId == 0)
+        {
+            mensaje = "Debe seleccionar un registro calificado.";
+            exito = false;
+            return;
+        }
+
+        if (!detallesActividades.Any())
+        {
+            mensaje = "Debe agregar al menos una actividad académica.";
+            exito = false;
+            return;
+        }
+
+        try
+        {
+            // Eliminar asignaciones viejas
+            var viejos = todosRegistros
+                .Where(x => x["registro_calificado_codigo"]?.ToString() == campoRegistroId.ToString())
+                .ToList();
+
+            foreach (var v in viejos)
+                await Api.EliminarAsync("aa_rc", "registro_calificado_codigo", campoRegistroId.ToString());
+
+            // Insertar nuevas
+            foreach (var aa in detallesActividades)
+            {
+                var datos = new Dictionary<string, object?>
+                {
+                    ["activ_academicas_idcurso"] = aa["activ_academicas_idcurso"],
+                    ["registro_calificado_codigo"] = campoRegistroId,
+                    ["componente"] = aa["componente"],
+                    ["semestre"] = aa["semestre"]
+                };
+                await Api.CrearAsync("aa_rc", datos);
+            }
+
+            mensaje = "Guardado con éxito";
+            exito = true;
+            mostrarFormulario = false;
+            await CargarRegistros();
+        }
+        catch (Exception ex)
+        {
+            mensaje = "Error: " + ex.Message;
+            exito = false;
+        }
+    }
+
+    private void NuevoRegistro()
+    {
+        editando = false;
+        campoRegistroId = 0;
+        tmpActividadId = 0;
+        tmpComponente = "";
+        tmpSemestre = "";
+        detallesActividades.Clear();
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private async Task EditarRegistro(int registroId)
+    {
+        editando = true;
+        campoRegistroId = registroId;
+        tmpActividadId = 0;
+        tmpComponente = "";
+        tmpSemestre = "";
+
+        detallesActividades = todosRegistros
+            .Where(x => x["registro_calificado_codigo"]?.ToString() == registroId.ToString())
+            .ToList();
+
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+        await Task.CompletedTask;
+    }
+
+    private async Task EliminarRegistro(int registroId)
+    {
+        if (await JS.InvokeAsync<bool>("confirm",
+            $"¿Eliminar todas las actividades del registro calificado {registroId}?"))
+        {
+            var aEliminar = todosRegistros
+                .Where(x => x["registro_calificado_codigo"]?.ToString() == registroId.ToString())
+                .ToList();
+
+            foreach (var v in aEliminar)
+                await Api.EliminarAsync("aa_rc", "registro_calificado_codigo", registroId.ToString());
+
+            await CargarRegistros();
+            mensaje = "Eliminado con éxito";
+            exito = true;
+        }
+    }
+
+    private void Cancelar()
+    {
+        mostrarFormulario = false;
+        mensaje = string.Empty;
+        detallesActividades.Clear();
+        tmpComponente = "";
+        tmpSemestre = "";
+    }
+}

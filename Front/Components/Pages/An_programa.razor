@@ -1,0 +1,355 @@
+@page "/an_programa"
+@rendermode InteractiveServer
+@using FrontBlazor_AppiGenericaCsharp.Services
+
+<PageTitle>Aspectos Normativos por Programa</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Aspectos Normativos por Programa</h3>
+        @if (!mostrarFormulario)
+        {
+            <button class="btn btn-primary shadow" @onclick="NuevoRegistro">
+                <i class="bi bi-plus-circle"></i> Asignar Aspecto Normativo
+            </button>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(exito ? "alert-success" : "alert-danger") alert-dismissible fade show">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+        </div>
+    }
+
+    @if (mostrarFormulario)
+    {
+        <div class="card shadow border-primary mb-5">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">@(editando ? "Editando aspectos del programa: " + ObtenerNombrePrograma(campoProgramaId.ToString()) : "Nueva Asignación")</h5>
+            </div>
+            <div class="card-body">
+
+                @* ── SELECCIÓN DE PROGRAMA ── *@
+                <div class="row border-bottom pb-3 mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Programa</label>
+                        <select class="form-select" @bind="campoProgramaId" disabled="@editando">
+                            <option value="0">-- Seleccione un programa --</option>
+                            @foreach (var p in programas)
+                            {
+                                <option value="@p["id"]">@p["nombre"]</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @* ── DETALLE ASPECTO_NORMATIVO ── *@
+                <h5 class="text-secondary mb-3">Aspectos Normativos</h5>
+                <div class="bg-light p-3 border rounded mb-3">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-10">
+                            <select class="form-select" @bind="tmpAspectoId">
+                                <option value="0">-- Seleccione un aspecto normativo --</option>
+                                @foreach (var an in aspectosNormativos)
+                                {
+                                    @if (!detallesAspectos.Any(x => x["aspecto_normativo"]?.ToString() == an["id"]?.ToString()))
+                                    {
+                                        <option value="@an["id"]">@an["tipo"] — @an["descripcion"]</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-info w-100" @onclick="AgregarAspectoLocal">
+                                <i class="bi bi-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm table-hover bg-white border">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th>Fuente</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var an in detallesAspectos)
+                            {
+                                <tr>
+                                    <td>@an["aspecto_normativo"]</td>
+                                    <td>@ObtenerCampoAspecto(an["aspecto_normativo"]?.ToString(), "tipo")</td>
+                                    <td>@ObtenerCampoAspecto(an["aspecto_normativo"]?.ToString(), "descripcion")</td>
+                                    <td>@ObtenerCampoAspecto(an["aspecto_normativo"]?.ToString(), "fuente")</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                @onclick="() => detallesAspectos.Remove(an)">
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!detallesAspectos.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No hay aspectos normativos asignados</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 text-end">
+                    <button class="btn btn-success btn-lg px-5 shadow" @onclick="GuardarTodo">
+                        <i class="bi bi-save"></i> GUARDAR TODO
+                    </button>
+                    <button class="btn btn-secondary btn-lg ms-2" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @if (cargando)
+        {
+            <div class="d-flex justify-content-center my-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        }
+        else if (programasConAn.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle border">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID Programa</th>
+                            <th>Nombre Programa</th>
+                            <th>Aspectos Normativos</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var grupo in programasConAn)
+                        {
+                            <tr>
+                                <td>@grupo.Key</td>
+                                <td class="fw-bold">@ObtenerNombrePrograma(grupo.Key.ToString())</td>
+                                <td>
+                                    @foreach (var an in grupo.Value)
+                                    {
+                                        <span class="badge bg-warning text-dark me-1">
+                                            @ObtenerCampoAspecto(an["aspecto_normativo"]?.ToString(), "tipo")
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-warning btn-sm me-1"
+                                            @onclick="() => EditarRegistro(grupo.Key)">
+                                        Editar
+                                    </button>
+                                    <button class="btn btn-danger btn-sm"
+                                            @onclick="() => EliminarPrograma(grupo.Key)">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">No hay aspectos normativos asignados a programas.</div>
+        }
+    }
+</div>
+
+@code {
+    [Inject] private ApiService Api { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private List<Dictionary<string, object?>> programas = new();
+    private List<Dictionary<string, object?>> aspectosNormativos = new();
+    private List<Dictionary<string, object?>> todosRegistros = new();
+    private Dictionary<int, List<Dictionary<string, object?>>> programasConAn = new();
+    private List<Dictionary<string, object?>> detallesAspectos = new();
+
+    private bool cargando = true;
+    private bool mostrarFormulario = false;
+    private bool editando = false;
+    private bool exito = false;
+    private string mensaje = "";
+
+    private int campoProgramaId = 0;
+    private int tmpAspectoId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(CargarProgramas(), CargarAspectosNormativos());
+        await CargarRegistros();
+    }
+
+    private async Task CargarRegistros()
+    {
+        cargando = true;
+        todosRegistros = await Api.ListarAsync("an_programa");
+
+        programasConAn = todosRegistros
+            .GroupBy(x => Convert.ToInt32(x["programa"]))
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        cargando = false;
+    }
+
+    private async Task CargarProgramas()
+    {
+        programas = await Api.ListarAsync("programa");
+    }
+
+    private async Task CargarAspectosNormativos()
+    {
+        aspectosNormativos = await Api.ListarAsync("aspecto_normativo");
+    }
+
+    private string ObtenerNombrePrograma(string? id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var p = programas.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return p?["nombre"]?.ToString() ?? id;
+    }
+
+    private string ObtenerCampoAspecto(string? id, string campo)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var an = aspectosNormativos.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return an?[campo]?.ToString() ?? "";
+    }
+
+    private void AgregarAspectoLocal()
+    {
+        if (tmpAspectoId == 0) return;
+
+        if (detallesAspectos.Any(x => x["aspecto_normativo"]?.ToString() == tmpAspectoId.ToString()))
+        {
+            mensaje = "Ese aspecto normativo ya está asignado.";
+            exito = false;
+            return;
+        }
+
+        detallesAspectos.Add(new Dictionary<string, object?>
+        {
+            ["aspecto_normativo"] = tmpAspectoId,
+            ["programa"] = campoProgramaId
+        });
+
+        tmpAspectoId = 0;
+        mensaje = string.Empty;
+    }
+
+    private async Task GuardarTodo()
+    {
+        if (campoProgramaId == 0)
+        {
+            mensaje = "Debe seleccionar un programa.";
+            exito = false;
+            return;
+        }
+
+        if (!detallesAspectos.Any())
+        {
+            mensaje = "Debe agregar al menos un aspecto normativo.";
+            exito = false;
+            return;
+        }
+
+        try
+        {
+            // Eliminar asignaciones viejas
+            var viejos = todosRegistros
+                .Where(x => x["programa"]?.ToString() == campoProgramaId.ToString())
+                .ToList();
+
+            foreach (var v in viejos)
+                await Api.EliminarAsync("an_programa", "programa", campoProgramaId.ToString());
+
+            // Insertar nuevas
+            foreach (var an in detallesAspectos)
+            {
+                var datos = new Dictionary<string, object?>
+                {
+                    ["aspecto_normativo"] = an["aspecto_normativo"],
+                    ["programa"] = campoProgramaId
+                };
+                await Api.CrearAsync("an_programa", datos);
+            }
+
+            mensaje = "Guardado con éxito";
+            exito = true;
+            mostrarFormulario = false;
+            await CargarRegistros();
+        }
+        catch (Exception ex)
+        {
+            mensaje = "Error: " + ex.Message;
+            exito = false;
+        }
+    }
+
+    private void NuevoRegistro()
+    {
+        editando = false;
+        campoProgramaId = 0;
+        tmpAspectoId = 0;
+        detallesAspectos.Clear();
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private async Task EditarRegistro(int programaId)
+    {
+        editando = true;
+        campoProgramaId = programaId;
+        tmpAspectoId = 0;
+
+        detallesAspectos = todosRegistros
+            .Where(x => x["programa"]?.ToString() == programaId.ToString())
+            .ToList();
+
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+        await Task.CompletedTask;
+    }
+
+    private async Task EliminarPrograma(int programaId)
+    {
+        if (await JS.InvokeAsync<bool>("confirm",
+            $"¿Eliminar todos los aspectos normativos del programa {ObtenerNombrePrograma(programaId.ToString())}?"))
+        {
+            var aEliminar = todosRegistros
+                .Where(x => x["programa"]?.ToString() == programaId.ToString())
+                .ToList();
+
+            foreach (var v in aEliminar)
+                await Api.EliminarAsync("an_programa", "programa", programaId.ToString());
+
+            await CargarRegistros();
+            mensaje = "Eliminado con éxito";
+            exito = true;
+        }
+    }
+
+    private void Cancelar()
+    {
+        mostrarFormulario = false;
+        mensaje = string.Empty;
+        detallesAspectos.Clear();
+    }
+}

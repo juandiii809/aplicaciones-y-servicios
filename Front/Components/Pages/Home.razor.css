@@ -1,0 +1,281 @@
+/* Configuración e Identidad Visual */
+.corporate-site {
+    font-family: 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: #2D3748;
+    background-color: #F7FAFC;
+    scroll-behavior: smooth;
+}
+
+/* Encabezado Ejecutivo / Navbar */
+.navbar-corporate {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 5%;
+    background: #FFFFFF;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1A365D;
+}
+
+.logo-text .accent {
+    color: #3182CE;
+    font-weight: 400;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #4A5568;
+    font-weight: 500;
+    transition: color 0.3s;
+    font-size: 0.95rem;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: #3182CE;
+}
+
+/* Botón de Inicio de Sesión Altamente Visible */
+.btn-login {
+    background: #1A365D;
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(26, 54, 93, 0.2);
+    transition: transform 0.2s, background 0.3s;
+}
+
+.btn-login:hover {
+    background: #2A4365;
+    transform: translateY(-1px);
+}
+
+/* Hero Section (Propuesta de Valor) */
+.hero-section {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    padding: 6rem 5%;
+    align-items: center;
+    gap: 4rem;
+    background: radial-gradient(circle at 90% 10%, #EBF8FF 0%, #FFFFFF 70%);
+}
+
+.badge-tech {
+    background: #EBF8FF;
+    color: #2B6CB0;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.hero-text h1 {
+    font-size: 3rem;
+    color: #1A365D;
+    line-height: 1.2;
+    margin-top: 1rem;
+    font-weight: 800;
+}
+
+.value-proposition {
+    font-size: 1.15rem;
+    color: #718096;
+    line-height: 1.7;
+    margin: 1.5rem 0 2.5rem 0;
+}
+
+/* Botones de Acción (CTA) */
+.cta-container {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-primary {
+    background: #3182CE;
+    color: white;
+    padding: 14px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(49, 130, 206, 0.3);
+    transition: background 0.3s;
+}
+
+.btn-primary:hover {
+    background: #2B6CB0;
+}
+
+.btn-secondary {
+    border: 2px solid #E2E8F0;
+    color: #4A5568;
+    padding: 12px 26px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.btn-secondary:hover {
+    background: #EDF2F7;
+}
+
+/* Contenedor de la Imagen Corporativa Simulada */
+.corporate-badge-large {
+    background: linear-gradient(135deg, #1A365D 0%, #2A4365 100%);
+    color: white;
+    padding: 3rem;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+.shield-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+/* Grillas y Secciones */
+.section-container {
+    padding: 5rem 5%;
+}
+
+.bg-alt { background-color: #EDF2F7; }
+.bg-dark { background-color: #1A365D; color: white; }
+
+.section-title {
+    text-align: center;
+    font-size: 2rem;
+    color: #1A365D;
+    margin-bottom: 3rem;
+    font-weight: 700;
+}
+.text-white { color: white; }
+.text-left { text-align: left; }
+
+.grid-three-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.grid-two-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+}
+
+/* Tarjetas de Servicios */
+.card-service {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+    transition: transform 0.3s;
+}
+
+.card-service:hover {
+    transform: translateY(-5px);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Formularios Corporativos Modernos */
+.corporate-form {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    color: #2D3748;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    font-family: inherit;
+}
+
+.width-100 { width: 100%; border: none; cursor: pointer;}
+
+/* Pie de Página */
+.footer-corporate {
+    background: #0D1B2A;
+    color: #A0AEC0;
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.85rem;
+    border-top: 1px solid #1A365D;
+}
+/* Contenedor principal de la tarjeta derecha */
+.corporate-badge-large {
+    background: linear-gradient(135deg, #1A365D 0%, #2A4365 100%);
+    color: white;
+    padding: 3.5rem 2rem;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+}
+/* Contenedor principal de la tarjeta azul (borde a borde) */
+.corporate-badge-large {
+    background: linear-gradient(135deg, #1A365D 0%, #2A4365 100%);
+    width: 100%;
+    height: 320px; /* Asegúrate de que esta altura coincida con la que deseas en tu diseño */
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Esto es vital para que la imagen se recorte en las esquinas redondeadas */
+    padding: 0 !important; /* 🟥 ELIMINAMOS todo el margen interno para que la imagen toque los bordes */
+    box-sizing: border-box;
+}
+
+/* Forzar al logo a ocupar todo el espacio disponible */
+.hero-logo-full {
+    width: 100%;
+    height: 100%;
+    /* 🚀 'fill' estira la imagen por completo para cubrir el contenedor */
+    object-fit: fill; 
+    
+    /* Nota alternativa: Si notas que el logo se deforma un poco hacia los lados, 
+       puedes cambiar 'fill' por 'cover' aquí abajo:
+       object-fit: cover; */
+}

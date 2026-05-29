@@ -1,0 +1,364 @@
+@page "/programa_ci"
+@rendermode InteractiveServer
+@using FrontBlazor_AppiGenericaCsharp.Services
+
+<PageTitle>Características de Innovación por Programa</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Características de Innovación por Programa</h3>
+        @if (!mostrarFormulario)
+        {
+            <button class="btn btn-primary shadow" @onclick="NuevoRegistro">
+                <i class="bi bi-plus-circle"></i> Asignar Innovación
+            </button>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(exito ? "alert-success" : "alert-danger") alert-dismissible fade show">
+            @mensaje
+            <button type="button" class="btn-close" @onclick="() => mensaje = string.Empty"></button>
+        </div>
+    }
+
+    @if (mostrarFormulario)
+    {
+        <div class="card shadow border-primary mb-5">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">@(editando ? "Editando asignaciones del programa: " + ObtenerNombrePrograma(campoProgramaId.ToString()) : "Nueva Asignación")</h5>
+            </div>
+            <div class="card-body">
+
+                @* ── SELECCIÓN DE PROGRAMA ── *@
+                <div class="row border-bottom pb-3 mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Programa</label>
+                        <select class="form-select" @bind="campoProgramaId" disabled="@editando">
+                            <option value="0">-- Seleccione un programa --</option>
+                            @foreach (var p in programas)
+                            {
+                                <option value="@p["id"]">@p["nombre"]</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @* ── DETALLE CAR_INNOVACION ── *@
+                <h5 class="text-secondary mb-3">Características de Innovación</h5>
+                <div class="bg-light p-3 border rounded mb-3">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-10">
+                            <select class="form-select" @bind="tmpCarInnovacionId">
+                                <option value="0">-- Seleccione una característica --</option>
+                                @foreach (var ci in carInnovaciones)
+                                {
+                                    @if (!detallesCarInnovacion.Any(x => x["car_innovacion"]?.ToString() == ci["id"]?.ToString()))
+                                    {
+                                        <option value="@ci["id"]">@ci["nombre"]</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-info w-100" @onclick="AgregarCarLocal">
+                                <i class="bi bi-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm table-hover bg-white border">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ci in detallesCarInnovacion)
+                            {
+                                <tr>
+                                    <td>@ci["car_innovacion"]</td>
+                                    <td>@ObtenerNombreCarInnovacion(ci["car_innovacion"]?.ToString())</td>
+                                    <td>@ObtenerTipoCarInnovacion(ci["car_innovacion"]?.ToString())</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                @onclick="() => detallesCarInnovacion.Remove(ci)">
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!detallesCarInnovacion.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No hay características asignadas</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 text-end">
+                    <button class="btn btn-success btn-lg px-5 shadow" @onclick="GuardarTodo">
+                        <i class="bi bi-save"></i> GUARDAR TODO
+                    </button>
+                    <button class="btn btn-secondary btn-lg ms-2" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* ── TABLA PRINCIPAL ── *@
+        @if (cargando)
+        {
+            <div class="d-flex justify-content-center my-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        }
+        else if (programasConCi.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle border">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID Programa</th>
+                            <th>Nombre Programa</th>
+                            <th>Características Asignadas</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var grupo in programasConCi)
+                        {
+                            <tr>
+                                <td>@grupo.Key</td>
+                                <td class="fw-bold">@ObtenerNombrePrograma(grupo.Key.ToString())</td>
+                                <td>
+                                    @foreach (var ci in grupo.Value)
+                                    {
+                                        <span class="badge bg-info text-dark me-1">
+                                            @ObtenerNombreCarInnovacion(ci["car_innovacion"]?.ToString())
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-warning btn-sm me-1"
+                                            @onclick="() => EditarRegistro(grupo.Key)">
+                                        Editar
+                                    </button>
+                                    <button class="btn btn-danger btn-sm"
+                                            @onclick="() => EliminarPrograma(grupo.Key)">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">No hay características de innovación asignadas.</div>
+        }
+    }
+</div>
+
+@code {
+    [Inject] private ApiService Api { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private List<Dictionary<string, object?>> programas = new();
+    private List<Dictionary<string, object?>> carInnovaciones = new();
+    private List<Dictionary<string, object?>> todosRegistros = new();
+    private Dictionary<int, List<Dictionary<string, object?>>> programasConCi = new();
+    private List<Dictionary<string, object?>> detallesCarInnovacion = new();
+
+    private bool cargando = true;
+    private bool mostrarFormulario = false;
+    private bool editando = false;
+    private bool exito = false;
+    private string mensaje = "";
+
+    private int campoProgramaId = 0;
+    private int tmpCarInnovacionId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(CargarProgramas(), CargarCarInnovaciones());
+        await CargarRegistros();
+    }
+
+    private async Task CargarRegistros()
+    {
+        cargando = true;
+        todosRegistros = await Api.ListarAsync("programa_ci");
+
+        // Agrupar por programa
+        programasConCi = todosRegistros
+            .GroupBy(x => Convert.ToInt32(x["programa"]))
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        cargando = false;
+    }
+
+    private async Task CargarProgramas()
+    {
+        programas = await Api.ListarAsync("programa");
+    }
+
+    private async Task CargarCarInnovaciones()
+    {
+        carInnovaciones = await Api.ListarAsync("car_innovacion");
+    }
+
+    private string ObtenerNombrePrograma(string? id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var p = programas.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return p?["nombre"]?.ToString() ?? id;
+    }
+
+    private string ObtenerNombreCarInnovacion(string? id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var ci = carInnovaciones.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return ci?["nombre"]?.ToString() ?? id;
+    }
+
+    private string ObtenerTipoCarInnovacion(string? id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        var ci = carInnovaciones.FirstOrDefault(x => x["id"]?.ToString() == id);
+        return ci?["tipo"]?.ToString() ?? "";
+    }
+
+    private void AgregarCarLocal()
+    {
+        if (tmpCarInnovacionId == 0) return;
+
+        // Verificar que no esté ya en la lista
+        if (detallesCarInnovacion.Any(x => x["car_innovacion"]?.ToString() == tmpCarInnovacionId.ToString()))
+        {
+            mensaje = "Esa característica ya está asignada.";
+            exito = false;
+            return;
+        }
+
+        detallesCarInnovacion.Add(new Dictionary<string, object?>
+        {
+            ["programa"] = campoProgramaId,
+            ["car_innovacion"] = tmpCarInnovacionId
+        });
+
+        tmpCarInnovacionId = 0;
+        mensaje = string.Empty;
+    }
+
+    private async Task GuardarTodo()
+    {
+        if (campoProgramaId == 0)
+        {
+            mensaje = "Debe seleccionar un programa.";
+            exito = false;
+            return;
+        }
+
+        if (!detallesCarInnovacion.Any())
+        {
+            mensaje = "Debe agregar al menos una característica de innovación.";
+            exito = false;
+            return;
+        }
+
+        try
+        {
+            // Eliminar registros viejos del programa
+            var viejos = todosRegistros
+                .Where(x => x["programa"]?.ToString() == campoProgramaId.ToString())
+                .ToList();
+
+            foreach (var v in viejos)
+                await Api.EliminarAsync("programa_ci", "programa", campoProgramaId.ToString());
+
+            // Insertar los nuevos
+            foreach (var ci in detallesCarInnovacion)
+            {
+                var datos = new Dictionary<string, object?>
+                {
+                    ["programa"] = campoProgramaId,
+                    ["car_innovacion"] = ci["car_innovacion"]
+                };
+                await Api.CrearAsync("programa_ci", datos);
+            }
+
+            mensaje = "Guardado con éxito";
+            exito = true;
+            mostrarFormulario = false;
+            await CargarRegistros();
+        }
+        catch (Exception ex)
+        {
+            mensaje = "Error: " + ex.Message;
+            exito = false;
+        }
+    }
+
+    private void NuevoRegistro()
+    {
+        editando = false;
+        campoProgramaId = 0;
+        tmpCarInnovacionId = 0;
+        detallesCarInnovacion.Clear();
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+    }
+
+    private async Task EditarRegistro(int programaId)
+    {
+        editando = true;
+        campoProgramaId = programaId;
+        tmpCarInnovacionId = 0;
+
+        // Cargar las características actuales del programa
+        detallesCarInnovacion = todosRegistros
+            .Where(x => x["programa"]?.ToString() == programaId.ToString())
+            .ToList();
+
+        mostrarFormulario = true;
+        mensaje = string.Empty;
+        await Task.CompletedTask;
+    }
+
+    private async Task EliminarPrograma(int programaId)
+    {
+        if (await JS.InvokeAsync<bool>("confirm",
+            $"¿Eliminar todas las características de innovación del programa {ObtenerNombrePrograma(programaId.ToString())}?"))
+        {
+            var aEliminar = todosRegistros
+                .Where(x => x["programa"]?.ToString() == programaId.ToString())
+                .ToList();
+
+            foreach (var v in aEliminar)
+                await Api.EliminarAsync("programa_ci", "programa", programaId.ToString());
+
+            await CargarRegistros();
+            mensaje = "Eliminado con éxito";
+            exito = true;
+        }
+    }
+
+    private void Cancelar()
+    {
+        mostrarFormulario = false;
+        mensaje = string.Empty;
+        detallesCarInnovacion.Clear();
+    }
+}
